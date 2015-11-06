@@ -20,6 +20,6 @@ public class UIBuyStructure : MonoBehaviour {
     }
     public void BuyStructure()
     {
-        GameManager.Main.Player.BuyStructure(StructureTemplate);
+        GameManager.Main.Player.EnterPlaceStructureMode(StructureTemplate);
     }
 }

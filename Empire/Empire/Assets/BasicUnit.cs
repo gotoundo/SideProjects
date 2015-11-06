@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
+using UnityEngine.EventSystems;
+//using System;
 
-public class BasicUnit : MonoBehaviour {
+public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public string parentObjectName;
-    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead }
-    public  enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Sleeping, Dead} //make private
-    //the probabilities of which state results after "Deciding" is determined per class
+    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store }
+    public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure } //the probabilities of which state results after "Deciding" is determined per class
+    public enum Attribute { MoveSpeed, AttackSpeed, AttackDamage, MaxHealth, HealthRegen, MaxMana, ManaRegen }
 
     public Team team;
 
@@ -15,25 +17,38 @@ public class BasicUnit : MonoBehaviour {
     public float XP; //make private
     public int Level;
 
+    [System.Serializable]
+    public class EquipmentSlot
+    {
+        public BasicItem.ItemType Type;
+        public BasicItem Instance;
+    }
+    public EquipmentSlot[] EquipmentSlots;
+    public BasicItem[] ProductsSold; 
+
     public int GoldCost;
 
     //public Tag[] InitialTags;//only for initial tags in the inspector
     public List<Tag> Tags;
 
-    GameObject MoveTarget;
+    public GameObject MoveTarget;
+    BasicUnit MoveTargetUnit { get { return MoveTarget ? MoveTarget.GetComponent<BasicUnit>() : null; } }
+    public Vector3 ExploreTarget;
+
     GameObject Home;
     NavMeshAgent agent;
     LineRenderer lineRenderer;
     new Renderer renderer;
 
     //state logic
-    State currentState;
-    
+    public State currentState;
 
     //Combat Traits
     public float maxHealth;
     float currentHealth;
-    float searchRadius = 50;
+    float huntSearchRadius = 20;
+    float storeSearchRadius = 1000;
+    float deathGiftRadius = 20f;
     public float attackRadius = 4;
     public float attackDamage;
     public float attackCooldown;
@@ -71,7 +86,7 @@ public class BasicUnit : MonoBehaviour {
 
 
     // Use this for initialization
-    void Awake () {
+    void Start () {
         agent = GetComponent<NavMeshAgent>();
         lineRenderer = GetComponent<LineRenderer>();
         renderer = GetComponent<Renderer>();
@@ -85,24 +100,24 @@ public class BasicUnit : MonoBehaviour {
 
         XP = Mathf.Pow(Level,2);
 
-        if (team == null && !spawnedByStructure && Tags.Contains(Tag.Imperial))
-                team = GameManager.Main.Player;
+        if (team == null && Tags.Contains(Tag.Imperial)) // && !spawnedByStructure
+            team = GameManager.Main.Player;
 
 
         if (Tags.Contains(Tag.Structure)) //Structure Setup
         {
-            currentState = State.None; //just for now, will modify thinking table when implemented
+            //currentState = State.None; //just for now, will modify thinking table when implemented
             corpseDuration = 0;
+            currentState = State.Structure;
         }
         else //Normal Unit Setup
         {
             currentState = State.Deciding;
-            corpseDuration = 5;
+            corpseDuration = 10;
             MoveSpeed = agent.speed;
             agent.stoppingDistance = attackRadius - 1;
             if (Tags.Contains(Tag.Imperial))
                 canLevelUp = true;
-            //agent.stoppingDistance = 2;
         }
 
 
@@ -118,9 +133,11 @@ public class BasicUnit : MonoBehaviour {
         switch (currentState)
         {
             case State.Deciding: //add a random duration - for structures this will be 0
-                currentState = State.Hunting;
+                DecideLogic();
+                
                 break;
             case State.Exploring:
+                ExploreLogic();
                 break;
             case State.Hunting:
                 HuntingLogic();
@@ -130,6 +147,7 @@ public class BasicUnit : MonoBehaviour {
             case State.Following:
                 break;
             case State.Shopping:
+                ShoppingLogic();
                 break;
             case State.GoingHome:
                 break;
@@ -146,6 +164,113 @@ public class BasicUnit : MonoBehaviour {
         CleanUp();
 	}
 
+    void ExploreLogic()
+    {
+        if (ExploreTarget == Vector3.zero)
+            ExploreTarget = new Vector3(Random.Range(0,GameManager.Main.MapBounds.x), 2, Random.Range(0,GameManager.Main.MapBounds.z));
+        agent.SetDestination(ExploreTarget);
+        if (Vector3.Distance(ExploreTarget, transform.position) < 5)
+            StopExploring();
+    }
+
+    void StopExploring()
+    {
+        currentState = State.Deciding;
+        ExploreTarget = Vector3.zero;
+    }
+
+    void DecideLogic()
+    {
+        MoveTarget = null;
+        ExploreTarget = Vector3.zero;
+
+        float RandomSelection = Random.Range(0, 100);
+        if (RandomSelection < 50)
+            currentState = State.Hunting;
+        else if (RandomSelection < 60)
+            currentState = State.Exploring;
+        else
+            currentState = State.Shopping;
+    }
+
+    void ShoppingLogic()
+    {
+
+        if (MoveTargetUnit == null || !MoveTargetUnit.Tags.Contains(Tag.Store))
+        {
+            if (!FindStore())
+                DoneShopping();
+        }
+        else
+        {
+            agent.stoppingDistance = 3;
+            if (Vector3.Distance(MoveTarget.transform.position, transform.position) < agent.stoppingDistance + 1)
+                BrowseWares();
+        }
+    }
+
+    void BrowseWares()
+    {
+        int amount = new List<BasicItem>(MoveTargetUnit.ProductsSold).Count; //if you put this in the for loop it fucking explodes
+
+        // try {
+        for (int product = 0; product < amount; product++)
+        {
+            for (int slot = 0; slot < EquipmentSlots.Count(); slot++)
+            {
+                BasicItem soldItem = MoveTargetUnit.ProductsSold[product];
+                if (EquipmentSlots[slot].Type == soldItem.Type)
+                {
+                    if (EquipmentSlots[slot].Instance == null || soldItem.Level > EquipmentSlots[slot].Instance.Level)
+                    {
+                        if (soldItem.Cost < Gold)
+                        {
+                            Gold -= soldItem.Cost;
+                            MoveTargetUnit.GainGold(soldItem.Cost);
+                            EquipmentSlots[slot].Instance = Instantiate(soldItem.gameObject).GetComponent<BasicItem>();
+                            Debug.Log(gameObject.name + " bought " + EquipmentSlots[slot].Instance.name + " from " + MoveTarget + ".");
+                            DoneShopping();
+                        }
+                    }
+                }
+            }
+        }
+        DoneShopping();
+        /*  }
+        catch
+         {
+             Debug.Log("What fuckery is this");
+         }*/
+    }
+
+    void DoneShopping()
+    {
+        MoveTarget = null;
+        currentState = State.Deciding;
+    }
+
+    bool FindStore()
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, storeSearchRadius);
+        List<BasicUnit> acceptableTargets = new List<BasicUnit>();
+        foreach (Collider collider in hitColliders)
+        {
+            BasicUnit encounteredUnit = collider.gameObject.GetComponent<BasicUnit>();
+            if (encounteredUnit != null && encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team)
+                acceptableTargets.Add(encounteredUnit);
+        }
+
+        if (acceptableTargets.Count > 0)
+        {
+            MoveTarget = acceptableTargets[Random.Range(0, acceptableTargets.Count - 1)].gameObject;
+            Debug.Log(gameObject.name + " chooses to shop at " + MoveTarget.name);
+            return true;
+        }
+        
+
+        return false;
+    }
+
     void CleanUp()
     {
         if (currentHealth <= 0)
@@ -156,6 +281,15 @@ public class BasicUnit : MonoBehaviour {
 
         remainingAttackCooldown -= Time.deltaTime;
         remainingAttackCooldown = Mathf.Max(0, remainingAttackCooldown);
+
+        //Move Towards Target's new position
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            if (MoveTarget != null)
+                agent.SetDestination(MoveTarget.transform.position);
+            else if (ExploreTarget == Vector3.zero)
+                agent.SetDestination(transform.position);
+        }
     }
 
     void UpdateSpawning()
@@ -193,8 +327,6 @@ public class BasicUnit : MonoBehaviour {
 
     void HuntingLogic()
     {
-        if (Tags.Contains(Tag.Structure))
-            return;
         
         if(MoveTarget == null) //find unit to focus on
         {
@@ -215,6 +347,14 @@ public class BasicUnit : MonoBehaviour {
             //Ability Logic
             ChannelAbility();
         }
+        else
+            StopHunting();
+    }
+
+    void StopHunting()
+    {
+        MoveTarget = null;
+        currentState = State.Deciding;
     }
 
     List<BasicUnit> SortByDistance(List<BasicUnit> PotentialTargets)
@@ -225,7 +365,7 @@ public class BasicUnit : MonoBehaviour {
 
     void ChannelAbility() //only activated if cooldown is 0
     {
-        BasicUnit AttackTarget = MoveTarget.GetComponent<BasicUnit>();
+        BasicUnit AttackTarget = MoveTargetUnit;
         if (AttackTarget.Tags.Contains(Tag.Dead))
             EndAbility();
         else if (Vector3.Distance(transform.position, MoveTarget.transform.position) < attackRadius)
@@ -240,9 +380,9 @@ public class BasicUnit : MonoBehaviour {
                     lineRenderer.SetPosition(0, transform.position);
                     lineRenderer.SetPosition(1, MoveTarget.transform.position);
                     if (abilityHeals)
-                        AttackTarget.DealHealing(FinalAttackDamage * Time.deltaTime);
+                        AttackTarget.TakeHealing(FinalAttackDamage * Time.deltaTime);
                     else
-                        AttackTarget.DealDamage(FinalAttackDamage * Time.deltaTime);
+                        AttackTarget.TakeDamage(FinalAttackDamage * Time.deltaTime);
                 }
                 if (remainingAttackDuration <= 0)
                     EndAbility();
@@ -258,13 +398,14 @@ public class BasicUnit : MonoBehaviour {
         lineRenderer.enabled = false;
         remainingAttackDuration = attackDuration;
         remainingAttackCooldown = attackCooldown;
+
     }
 
 
 
     List<BasicUnit> AcquireAcceptableTargets()
     {
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, searchRadius);
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, huntSearchRadius);
         List<BasicUnit> acceptableTargets = new List<BasicUnit>();
         foreach (Collider collider in hitColliders)
         {
@@ -295,12 +436,16 @@ public class BasicUnit : MonoBehaviour {
         return acceptableTargets;
     }
 
-    public void DealDamage(float damage)
+    public void TakeDamage(float damage)
     {
         currentHealth -= Mathf.Max(0,damage);
+        if (currentState != State.Hunting)
+            DecideLogic();
+
+
     }
 
-    public void DealHealing(float damage)
+    public void TakeHealing(float damage)
     {
         currentHealth += Mathf.Max(0,damage);
         currentHealth = Mathf.Min(currentHealth, maxHealth);
@@ -317,7 +462,9 @@ public class BasicUnit : MonoBehaviour {
                 OnDeathDistributeGoldAndXP();
 
             if (agent != null)
-                agent.Stop();
+                MoveTarget = null;
+
+            ExploreTarget = Vector3.zero;
 
             renderer.material.color = Color.grey;
         }
@@ -334,7 +481,7 @@ public class BasicUnit : MonoBehaviour {
     void OnDeathDistributeGoldAndXP()
     {
         //Grant Gold
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, searchRadius);
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, deathGiftRadius);
         List<BasicUnit> goldRecipients = new List<BasicUnit>();
         foreach (Collider col in hitColliders)
         {
@@ -378,10 +525,17 @@ public class BasicUnit : MonoBehaviour {
     void GainGold(int goldAmount)
     {
         Gold += goldAmount; //add visual and sound effects
+        if(Tags.Contains(Tag.Store) && team != null)
+        {
+            team.Gold += Gold;
+            Gold = 0;
+        }
     }
 
     void GainXP(float xpAmount)
     {
+        Debug.Log(gameObject.name + " earned " + xpAmount + " XP");
+
         XP += xpAmount; 
         int proposedNewLevel = (int)Mathf.Sqrt(XP);
         while (Level < proposedNewLevel && canLevelUp)
@@ -393,8 +547,13 @@ public class BasicUnit : MonoBehaviour {
        
         Level++; //add visual and sound effects
         Debug.Log(gameObject.name + " leveled up to " + Level + "!");
-        gameObject.name = parentObjectName + " " + Level;
+        gameObject.name = (parentObjectName.Length ==0 ? gameObject.name : parentObjectName) + " " + Level;
     }
 
-    
+
+    //UI Considerations
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        GameManager.Main.StartInspection(this);
+    }
 }

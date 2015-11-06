@@ -27,11 +27,16 @@ public class Team : MonoBehaviour {
         return Gold >= Structure.GoldCost;
     }
 
-    public void BuyStructure(BasicUnit StructureTemplate)
+    public void EnterPlaceStructureMode(BasicUnit StructureTemplate)
+    {
+        GameManager.Main.StartStructurePlacement(StructureTemplate);
+    }
+
+    public void PlaceStructure(BasicUnit StructureTemplate, Vector3 position)
     {
         if (CanAffordStructure(StructureTemplate))
         {
-            GameObject NewStucture = Instantiate(StructureTemplate.gameObject);
+            GameObject NewStucture = (GameObject)Instantiate(StructureTemplate.gameObject, position, StructureTemplate.transform.rotation);
             NewStucture.GetComponent<BasicUnit>().team = this;
             Gold -= StructureTemplate.GoldCost;
             ModifyMaxBuildableUnits(StructureTemplate, StructureTemplate.MaxSpawns);
