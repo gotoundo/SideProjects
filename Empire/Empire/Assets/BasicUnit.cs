@@ -49,6 +49,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     float huntSearchRadius = 20;
     float storeSearchRadius = 1000;
     float deathGiftRadius = 20f;
+    float cryForHelpRadius = 10f;
     public float attackRadius = 4;
     public float attackDamage;
     public float attackCooldown;
@@ -169,7 +170,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         if (ExploreTarget == Vector3.zero)
             ExploreTarget = new Vector3(Random.Range(0,GameManager.Main.MapBounds.x), 2, Random.Range(0,GameManager.Main.MapBounds.z));
         agent.SetDestination(ExploreTarget);
-        if (Vector3.Distance(ExploreTarget, transform.position) < 5)
+        if (Vector3.Distance(ExploreTarget, transform.position) < agent.stoppingDistance+4)
             StopExploring();
     }
 
@@ -181,6 +182,12 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void DecideLogic()
     {
+        if(Tags.Contains(Tag.Structure))
+        {
+            currentState = State.Structure;
+            return;
+        }
+
         MoveTarget = null;
         ExploreTarget = Vector3.zero;
 
@@ -212,8 +219,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     void BrowseWares()
     {
         int amount = new List<BasicItem>(MoveTargetUnit.ProductsSold).Count; //if you put this in the for loop it fucking explodes
-
-        // try {
         for (int product = 0; product < amount; product++)
         {
             for (int slot = 0; slot < EquipmentSlots.Count(); slot++)
@@ -223,24 +228,16 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                 {
                     if (EquipmentSlots[slot].Instance == null || soldItem.Level > EquipmentSlots[slot].Instance.Level)
                     {
-                        if (soldItem.Cost < Gold)
-                        {
-                            Gold -= soldItem.Cost;
-                            MoveTargetUnit.GainGold(soldItem.Cost);
-                            EquipmentSlots[slot].Instance = Instantiate(soldItem.gameObject).GetComponent<BasicItem>();
-                            Debug.Log(gameObject.name + " bought " + EquipmentSlots[slot].Instance.name + " from " + MoveTarget + ".");
-                            DoneShopping();
-                        }
+                        Gold -= soldItem.Cost;
+                        MoveTargetUnit.GainGold(soldItem.Cost);
+                        EquipmentSlots[slot].Instance = Instantiate(soldItem.gameObject).GetComponent<BasicItem>();
+                        Debug.Log(gameObject.name + " bought " + EquipmentSlots[slot].Instance.name + " from " + MoveTarget + ".");
+                        DoneShopping();
                     }
                 }
             }
         }
         DoneShopping();
-        /*  }
-        catch
-         {
-             Debug.Log("What fuckery is this");
-         }*/
     }
 
     void DoneShopping()
@@ -251,12 +248,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     bool FindStore()
     {
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, storeSearchRadius);
+        List<BasicUnit> initialTargets = GetUnitsWithinRange(storeSearchRadius);
         List<BasicUnit> acceptableTargets = new List<BasicUnit>();
-        foreach (Collider collider in hitColliders)
+        foreach (BasicUnit encounteredUnit in initialTargets)
         {
-            BasicUnit encounteredUnit = collider.gameObject.GetComponent<BasicUnit>();
-            if (encounteredUnit != null && encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team)
+            if (encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team && CheckStoreForDesireableItems(encounteredUnit).Count>0)
                 acceptableTargets.Add(encounteredUnit);
         }
 
@@ -319,10 +315,16 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         spawnedUnit.Home = gameObject;
         spawnedUnit.spawnedByStructure = true;
         spawnedUnit.parentObjectName = SpawnType.gameObject.name;
+        spawnedObject.name = SpawnType.name;
 
             //spawnedByStructure
 
         //spawn.GetComponent<BasicUnit>().team = team; //right now it is automatically being set by monster or imperial tag
+    }
+
+    void StartHunting()
+    {
+        currentState = State.Hunting;
     }
 
     void HuntingLogic()
@@ -380,9 +382,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                     lineRenderer.SetPosition(0, transform.position);
                     lineRenderer.SetPosition(1, MoveTarget.transform.position);
                     if (abilityHeals)
-                        AttackTarget.TakeHealing(FinalAttackDamage * Time.deltaTime);
+                        AttackTarget.TakeHealing(FinalAttackDamage * Time.deltaTime,this);
                     else
-                        AttackTarget.TakeDamage(FinalAttackDamage * Time.deltaTime);
+                        AttackTarget.TakeDamage(FinalAttackDamage * Time.deltaTime,this);
                 }
                 if (remainingAttackDuration <= 0)
                     EndAbility();
@@ -436,16 +438,16 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         return acceptableTargets;
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage, BasicUnit source)
     {
         currentHealth -= Mathf.Max(0,damage);
         if (currentState != State.Hunting)
             DecideLogic();
-
-
+        else if (currentHealth / maxHealth < .3f)
+            DecideLogic();
     }
 
-    public void TakeHealing(float damage)
+    public void TakeHealing(float damage, BasicUnit source)
     {
         currentHealth += Mathf.Max(0,damage);
         currentHealth = Mathf.Min(currentHealth, maxHealth);
@@ -467,6 +469,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             ExploreTarget = Vector3.zero;
 
             renderer.material.color = Color.grey;
+            lineRenderer.enabled = false;
         }
 
         remainingCorpseDuration -= Time.deltaTime;
@@ -548,7 +551,69 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         Level++; //add visual and sound effects
         Debug.Log(gameObject.name + " leveled up to " + Level + "!");
         gameObject.name = (parentObjectName.Length ==0 ? gameObject.name : parentObjectName) + " " + Level;
+
+        //temporary level up effects
+        maxHealth *= 1.2f;
+        currentHealth = maxHealth;
+        attackDamage *= 1.2f;
     }
+
+    void BroadcastCryForHelp(BasicUnit attacker)
+    {
+        List<BasicUnit> nearbyUnits = GetUnitsWithinRange(cryForHelpRadius);
+        foreach(BasicUnit unit in nearbyUnits)
+        {
+            if (unit.team == team)
+                unit.HearCryForHelp(this, attacker);
+        }
+    }
+
+    public void HearCryForHelp(BasicUnit unitInDistress, BasicUnit attacker)
+    {
+        if(!Tags.Contains(Tag.Structure))
+        {
+            if(currentState == State.Exploring)
+            {
+                StopExploring();
+                StartHunting();
+            }
+        }
+    }
+
+    List<BasicUnit> GetUnitsWithinRange(float range)
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, range);
+        List<BasicUnit> unitList = new List<BasicUnit>();
+        foreach (Collider col in hitColliders)
+        {
+            BasicUnit NearbyUnit = col.gameObject.GetComponent<BasicUnit>();
+            if (NearbyUnit != null)
+                unitList.Add(NearbyUnit);
+        }
+        return unitList;
+    }
+
+    List<BasicItem> CheckStoreForDesireableItems(BasicUnit store)
+    {
+        List<BasicItem> DesireableItems = new List<BasicItem>();
+        int productCount = new List<BasicItem>(store.ProductsSold).Count; //if you put this in the for loop it fucking explodes
+        for (int product = 0; product < productCount; product++)
+        {
+            for (int slot = 0; slot < EquipmentSlots.Count(); slot++)
+            {
+                BasicItem soldItem = store.ProductsSold[product];
+                if (EquipmentSlots[slot].Type == soldItem.Type)
+                {
+                    if (EquipmentSlots[slot].Instance == null || soldItem.Level > EquipmentSlots[slot].Instance.Level)
+                    {
+                        DesireableItems.Add(EquipmentSlots[slot].Instance);
+                    }
+                }
+            }
+        }
+        return DesireableItems;
+    }
+    
 
 
     //UI Considerations
