@@ -3,19 +3,53 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using UnityEngine.EventSystems;
-//using System;
+
 
 public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public string parentObjectName;
-    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store }
-    public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure } //the probabilities of which state results after "Deciding" is determined per class
+    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self }
+    public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned } //the probabilities of which state results after "Deciding" is determined per class
     public enum Attribute { MoveSpeed, AttackSpeed, AttackDamage, MaxHealth, HealthRegen, MaxMana, ManaRegen }
+
+	public enum Stat{ Strength, Dexterity, Intelligence}
+
+	Dictionary<Stat, int> stats;
+
+
+	public float GetStat(Stat stat)
+	{
+		return 1f;
+	}
+
+
+	/*public Dictionary<Stat, int> GetStats
+	{
+		get
+		{
+			Dictionary<Stat, int> tempStats = new Dictionary<Stat, int>();
+			foreach (Stat stat in Stats.Keys)
+				tempStats.Add(stat, Stats[stat]);
+			
+			foreach (BasicItem buff in Buffs)
+				foreach (Stat stat in buff.StatModifiers.Keys)
+					tempStats[stat] += buff.StatModifiers[stat];
+			
+			foreach (Loot loot in Equipment.Values)
+				foreach (Stat stat in loot.StatModifiers.Keys)
+					tempStats[stat] += loot.StatModifiers[stat];
+			
+			return tempStats;
+		}
+	}*/
 
     public Team team;
 
     public int Gold;
     public float XP; //make private
     public int Level;
+
+	public List<BasicAbility> Abilities;
+	BasicAbility currentAbility;
 
     [System.Serializable]
     public class EquipmentSlot
@@ -51,18 +85,18 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     float deathGiftRadius = 20f;
     float cryForHelpRadius = 10f;
     public float attackRadius = 4;
-    public float attackDamage;
-    public float attackCooldown;
-    float remainingAttackCooldown;
-    float attackDuration = 1f;
-    float remainingAttackDuration;
+   // public float attackDamage;
+   // public float attackCooldown;
+   // float remainingAttackCooldown;
+    //float attackDuration = 1f;
+    //float remainingAttackDuration;
     
-    public List<Tag> AbilityTags;
+   /* public List<Tag> AbilityTags;
     public List<Tag> RequiredAbilityTags;
-    public List<Tag> ExcludedAbilityTags;
+    public List<Tag> ExcludedAbilityTags;*/
 
     //Combat Accessors
-    float FinalAttackDamage { get { return attackDamage + Level; } }
+//    float FinalAttackDamage { get { return attackDamage + Level; } }
 
     //Movement Traits
     float MoveSpeed;
@@ -85,7 +119,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     bool canLevelUp = false;
     
 
-
     // Use this for initialization
     void Start () {
         agent = GetComponent<NavMeshAgent>();
@@ -95,10 +128,17 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         Spawns = new List<GameObject>();
 
         Tags = Tags ?? new List<Tag>();
-        AbilityTags = AbilityTags ?? new List<Tag>();
-        RequiredAbilityTags = RequiredAbilityTags ?? new List<Tag>();
-        ExcludedAbilityTags = ExcludedAbilityTags ?? new List<Tag>();
+		Abilities = Abilities ?? new List<BasicAbility> ();
 
+		for (int i = 0; i<Abilities.Count; i++) {
+			{
+				Abilities[i] = Instantiate(Abilities[i]).GetComponent<BasicAbility>();
+				Abilities[i].gameObject.transform.SetParent(transform);
+			}
+		}
+
+
+       
         XP = Mathf.Pow(Level,2);
 
         if (team == null && Tags.Contains(Tag.Imperial)) // && !spawnedByStructure
@@ -122,7 +162,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         }
 
 
-        remainingAttackDuration = attackDuration;
+//        remainingAttackDuration = attackDuration;
         remainingCorpseDuration = corpseDuration;
         
         lineRenderer.material.color = renderer.material.color;
@@ -275,8 +315,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         while (Spawns.Contains(null))
             Spawns.Remove(null);
 
-        remainingAttackCooldown -= Time.deltaTime;
-        remainingAttackCooldown = Mathf.Max(0, remainingAttackCooldown);
+      //  remainingAttackCooldown -= Time.deltaTime;
+      //  remainingAttackCooldown = Mathf.Max(0, remainingAttackCooldown);
 
         //Move Towards Target's new position
         if (agent != null && agent.isActiveAndEnabled)
@@ -329,11 +369,15 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void HuntingLogic()
     {
+		if (Abilities.Count == 0) {
+			StopHunting();
+			return;
+		}
         
         if(MoveTarget == null) //find unit to focus on
         {
             lineRenderer.enabled = false;
-            List<BasicUnit> acceptableTargets = AcquireAcceptableTargets();
+            List<BasicUnit> acceptableTargets = chooseAbilityAndFindPossibleTargets();
 
             acceptableTargets = SortByDistance(acceptableTargets);
 
@@ -355,8 +399,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void StopHunting()
     {
+		if(currentAbility!=null)
+			EndAbility ();
         MoveTarget = null;
         currentState = State.Deciding;
+
     }
 
     List<BasicUnit> SortByDistance(List<BasicUnit> PotentialTargets)
@@ -365,13 +412,48 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     }
 
 
+	public void DealDamage(float damage, BasicUnit Target)
+	{
+		Target.TakeDamage (damage, this);
+	}
+
+	public void DealHealing(float healing, BasicUnit Target)
+	{
+		Target.TakeHealing (healing, this);
+	}
+
     void ChannelAbility() //only activated if cooldown is 0
     {
-        BasicUnit AttackTarget = MoveTargetUnit;
-        if (AttackTarget.Tags.Contains(Tag.Dead))
-            EndAbility();
-        else if (Vector3.Distance(transform.position, MoveTarget.transform.position) < attackRadius)
+		Debug.Log ("Running combat logic");
+
+		if (Abilities.Count == 0) {
+			StopHunting ();
+			return;
+		}
+
+        BasicUnit initialAbilityTarget = MoveTargetUnit;
+		if (currentAbility == null) {
+			currentAbility = Abilities [0];
+			Debug.Log ("Picking new Ability!");
+
+		}
+
+        /*if (initialAbilityTarget.Tags.Contains (Tag.Dead)) {
+			EndAbility ();
+		}*/
+
+
+
+		if (currentAbility.isWithinRange(initialAbilityTarget))
         {
+			Debug.Log("In range of ability!");
+			if(!currentAbility.Running ())
+			{
+				Debug.Log("Start casting!");
+				currentAbility.StartCasting(initialAbilityTarget);
+			}
+
+			/*
             if (remainingAttackCooldown <= 0)
             {
                 if (remainingAttackDuration > 0)
@@ -382,60 +464,56 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                     lineRenderer.SetPosition(0, transform.position);
                     lineRenderer.SetPosition(1, MoveTarget.transform.position);
                     if (abilityHeals)
-                        AttackTarget.TakeHealing(FinalAttackDamage * Time.deltaTime,this);
+                        DealHealing(FinalAttackDamage * Time.deltaTime,AttackTarget);
                     else
-                        AttackTarget.TakeDamage(FinalAttackDamage * Time.deltaTime,this);
+						DealDamage(FinalAttackDamage * Time.deltaTime,AttackTarget);
                 }
                 if (remainingAttackDuration <= 0)
                     EndAbility();
-            }
+            }*/
         }
-        else
-            remainingAttackDuration = attackDuration;
+       // else
+         //   remainingAttackDuration = attackDuration;
     }
 
     void EndAbility()
     {
+		Debug.Log ("Stopped using ability");
+
+		if (currentAbility != null) {
+			currentAbility.FinishAbility();
+		}
+		currentAbility = null;
         MoveTarget = null;
-        lineRenderer.enabled = false;
-        remainingAttackDuration = attackDuration;
-        remainingAttackCooldown = attackCooldown;
+       
+        //remainingAttackDuration = attackDuration;
+        //remainingAttackCooldown = attackCooldown;
 
     }
 
 
 
-    List<BasicUnit> AcquireAcceptableTargets()
+    List<BasicUnit> chooseAbilityAndFindPossibleTargets()
     {
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, huntSearchRadius);
-        List<BasicUnit> acceptableTargets = new List<BasicUnit>();
-        foreach (Collider collider in hitColliders)
-        {
-            BasicUnit PotentialTarget = collider.gameObject.GetComponent<BasicUnit>();
-            if (PotentialTarget != null && PotentialTarget != this)
-            {
-                bool acceptableTarget = false;
+		foreach (BasicAbility potentialAbility in Abilities) {
+			Collider[] hitColliders = Physics.OverlapSphere (transform.position, huntSearchRadius);
+			List<BasicUnit> acceptableTargets = new List<BasicUnit> ();
+			foreach (Collider collider in hitColliders) {
+				BasicUnit PotentialTarget = collider.gameObject.GetComponent<BasicUnit> ();
+				if (PotentialTarget != null && PotentialTarget != this) {
+					bool acceptableTarget = potentialAbility.isValidTarget (PotentialTarget);
 
-                foreach (Tag tag in AbilityTags)
-                    if (PotentialTarget.Tags.Contains(tag))
-                        acceptableTarget = true;
-
-                foreach (Tag tag in RequiredAbilityTags)
-                    if (!PotentialTarget.Tags.Contains(tag))
-                        acceptableTarget = false;
-
-                foreach (Tag tag in ExcludedAbilityTags)
-                    if (PotentialTarget.Tags.Contains(tag))
-                        acceptableTarget = false;
-
-                if (abilityHeals && PotentialTarget.AtMaxHealth())
-                    acceptableTarget = false;
-
-                if (acceptableTarget)
-                    acceptableTargets.Add(PotentialTarget);
-            }
-        }
-        return acceptableTargets;
+					if (acceptableTarget)
+						acceptableTargets.Add (PotentialTarget);
+				}
+			}
+			if(acceptableTargets.Count>0)
+			{
+				currentAbility = potentialAbility;
+				return acceptableTargets;
+			}
+		}
+		return new List<BasicUnit> ();
     }
 
     public void TakeDamage(float damage, BasicUnit source)
@@ -555,7 +633,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         //temporary level up effects
         maxHealth *= 1.2f;
         currentHealth = maxHealth;
-        attackDamage *= 1.2f;
+//        attackDamage *= 1.2f;
     }
 
     void BroadcastCryForHelp(BasicUnit attacker)
