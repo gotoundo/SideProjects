@@ -79,7 +79,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     //Combat Traits
     public float maxHealth;
-    float currentHealth;
+    public float currentHealth;
     float huntSearchRadius = 20;
     float storeSearchRadius = 1000;
     float deathGiftRadius = 20f;
@@ -232,13 +232,26 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         ExploreTarget = Vector3.zero;
 
         float RandomSelection = Random.Range(0, 100);
-        if (RandomSelection < 50)
-            currentState = State.Hunting;
-        else if (RandomSelection < 60)
-            currentState = State.Exploring;
-        else
-            currentState = State.Shopping;
+        if (RandomSelection < 99)
+			StartHunting ();
+		else if (RandomSelection < 60)
+			StartShopping ();
+		else
+			StartExploring ();
+            
     }
+
+	void StartShopping()
+	{
+		MoveTarget = null;
+		currentState = State.Shopping;
+	}
+
+	void StartExploring()
+	{
+		MoveTarget = null;
+		currentState = State.Exploring;
+	}
 
     void ShoppingLogic()
     {
@@ -364,6 +377,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void StartHunting()
     {
+		Debug.Log ("Starting the Hunt!");
         currentState = State.Hunting;
     }
 
@@ -376,7 +390,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         
         if(MoveTarget == null) //find unit to focus on
         {
-            lineRenderer.enabled = false;
+			Debug.Log("Choosing New Move Target");
             List<BasicUnit> acceptableTargets = chooseAbilityAndFindPossibleTargets();
 
             acceptableTargets = SortByDistance(acceptableTargets);
@@ -385,26 +399,22 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                 MoveTarget = acceptableTargets[0].gameObject; //Random.Range(0, acceptableTargets.Count) //pick closest target
         }
 
-        if (MoveTarget != null)
-        {
-            //Move Towards Target's new position
-            agent.SetDestination(MoveTarget.transform.position);
-
-            //Ability Logic
-            ChannelAbility();
-        }
+        if (MoveTarget != null) {
+			agent.SetDestination (MoveTarget.transform.position);
+			ChannelAbility ();
+		}
         else
             StopHunting();
     }
 
     void StopHunting()
     {
-		if(currentAbility!=null)
-			EndAbility ();
-        MoveTarget = null;
-        currentState = State.Deciding;
 
-    }
+		InterruptAbility ();
+		currentAbility = null;
+		MoveTarget = null;
+		currentState = State.Deciding;
+	}
 
     List<BasicUnit> SortByDistance(List<BasicUnit> PotentialTargets)
     {
@@ -422,9 +432,21 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		Target.TakeHealing (healing, this);
 	}
 
+	void PickAbility(BasicAbility pickedAbility)
+	{
+		currentAbility = pickedAbility;
+		currentAbility.ResetAbility();
+		agent.stoppingDistance = currentAbility.range - 1;
+	}
+
+	void PickAbility()
+	{
+		PickAbility (Abilities [0]);
+	}
+
     void ChannelAbility() //only activated if cooldown is 0
     {
-		Debug.Log ("Running combat logic");
+		//Debug.Log ("Running combat logic");
 
 		if (Abilities.Count == 0) {
 			StopHunting ();
@@ -433,65 +455,44 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
         BasicUnit initialAbilityTarget = MoveTargetUnit;
 		if (currentAbility == null) {
-			currentAbility = Abilities [0];
+			PickAbility();
 			Debug.Log ("Picking new Ability!");
 
+		} 
+
+        if (!currentAbility.isValidTarget(initialAbilityTarget)) {
+			Debug.Log("Initial target no longer valid! Cancelling ability use.");
+			InterruptAbility ();
+			return;
 		}
 
-        /*if (initialAbilityTarget.Tags.Contains (Tag.Dead)) {
-			EndAbility ();
-		}*/
-
-
-
-		if (currentAbility.isWithinRange(initialAbilityTarget))
-        {
-			Debug.Log("In range of ability!");
-			if(!currentAbility.Running ())
-			{
-				Debug.Log("Start casting!");
-				currentAbility.StartCasting(initialAbilityTarget);
+		if (currentAbility.isWithinRange (initialAbilityTarget)) {
+			Debug.Log ("In range of ability!");
+			if (currentAbility.CanCast() && !currentAbility.running) {
+				currentAbility.StartCasting (initialAbilityTarget);
 			}
+			else
+				Debug.Log ("Can't cast because cooldown or ability already running");
+		} else {
+			Debug.Log ("Not in range to use ability.");
+		}
 
-			/*
-            if (remainingAttackCooldown <= 0)
-            {
-                if (remainingAttackDuration > 0)
-                {
-                    remainingAttackDuration -= Time.deltaTime;
-                    
-                    lineRenderer.enabled = true;
-                    lineRenderer.SetPosition(0, transform.position);
-                    lineRenderer.SetPosition(1, MoveTarget.transform.position);
-                    if (abilityHeals)
-                        DealHealing(FinalAttackDamage * Time.deltaTime,AttackTarget);
-                    else
-						DealDamage(FinalAttackDamage * Time.deltaTime,AttackTarget);
-                }
-                if (remainingAttackDuration <= 0)
-                    EndAbility();
-            }*/
-        }
-       // else
-         //   remainingAttackDuration = attackDuration;
+		if (currentAbility.finished) {
+			Debug.Log("Ability has finished so shutting down hunt.");
+			StopHunting();
+			return;
+		}
     }
 
-    void EndAbility()
+    void InterruptAbility()
     {
-		Debug.Log ("Stopped using ability");
-
-		if (currentAbility != null) {
+		if (currentAbility != null && !currentAbility.finished) {
+			Debug.Log ("Ability Interrupted");
 			currentAbility.FinishAbility();
 		}
 		currentAbility = null;
         MoveTarget = null;
-       
-        //remainingAttackDuration = attackDuration;
-        //remainingAttackCooldown = attackCooldown;
-
     }
-
-
 
     List<BasicUnit> chooseAbilityAndFindPossibleTargets()
     {
@@ -509,7 +510,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 			}
 			if(acceptableTargets.Count>0)
 			{
-				currentAbility = potentialAbility;
+				PickAbility(potentialAbility);
+				Debug.Log("Chose ability from options");
 				return acceptableTargets;
 			}
 		}
@@ -518,6 +520,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     public void TakeDamage(float damage, BasicUnit source)
     {
+		Debug.Log (gameObject.name + " is taking " + damage + " damage from " + source.gameObject.name);
         currentHealth -= Mathf.Max(0,damage);
         if (currentState != State.Hunting)
             DecideLogic();
@@ -533,22 +536,23 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void Die()
     {
-        if (currentState != State.Dead) //then initialize the death state
-        {
-            currentState = State.Dead;
-            Tags.Add(Tag.Dead);
+        if (currentState != State.Dead) { //then initialize the death state
+			currentState = State.Dead;
+			Tags.Add (Tag.Dead);
 
-            if (Tags.Contains(Tag.Monster))
-                OnDeathDistributeGoldAndXP();
+			if (Tags.Contains (Tag.Monster))
+				OnDeathDistributeGoldAndXP ();
 
-            if (agent != null)
-                MoveTarget = null;
+			if (agent != null)
+				MoveTarget = null;
 
-            ExploreTarget = Vector3.zero;
+			ExploreTarget = Vector3.zero;
 
-            renderer.material.color = Color.grey;
-            lineRenderer.enabled = false;
-        }
+			renderer.material.color = Color.grey;
+
+
+			InterruptAbility ();
+		}
 
         remainingCorpseDuration -= Time.deltaTime;
         if (remainingCorpseDuration <= 0)

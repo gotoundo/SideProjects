@@ -51,7 +51,6 @@
      <Compile Include="Assets\BasicUnit.cs" />
      <Compile Include="Assets\BasicUpgrade.cs" />
      <Compile Include="Assets\GameManager.cs" />
-     <Compile Include="Assets\Player.cs" />
      <Compile Include="Assets\Team.cs" />
      <Compile Include="Assets\TraitModifier.cs" />
      <Compile Include="Assets\UIBuyStructure.cs" />

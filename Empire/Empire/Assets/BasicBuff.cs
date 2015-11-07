@@ -1,6 +1,14 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+public static class Tools
+{
+	public static float DecrementTimer(float timer)
+	{
+		return Mathf.Max (0, timer - Time.deltaTime);
+	}
+}
+
 public class BasicBuff : MonoBehaviour { //attached to 
 	public enum Effect {Damage, Healing, Stun, Confusion}
 
@@ -58,14 +66,14 @@ public class BasicBuff : MonoBehaviour { //attached to
 		}	
 
 
-		duration -= Time.deltaTime;
+		duration = Tools.DecrementTimer (duration);
 		if (duration <= 0)
 			EndBuff ();
 	}
 
 	public void EndBuff()
 	{
-		Destroy (this);
+		Destroy (gameObject);
 	}
 
 }

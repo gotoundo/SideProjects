@@ -23,6 +23,7 @@ public class BasicAbility : MonoBehaviour {
 	public int levelRequired = 0;
 	public Dictionary<BasicUnit,int> structureLevelsRequired;
 
+
 	BasicUnit Source;
 
 	BasicUnit initialTarget 
@@ -42,6 +43,7 @@ public class BasicAbility : MonoBehaviour {
 	public bool running;
 	public bool casting;
 	public bool channeling;
+	public bool finished;
 
 	public bool Running()
 	{
@@ -49,59 +51,89 @@ public class BasicAbility : MonoBehaviour {
 	}
 
 
+	public void Awake()
+	{
+
+		ResetAbility ();
+	}
 
 	public void Start()
 	{
-		running = false;
-		casting = false;
-		channeling = false;
+		Debug.Log ("Ability initialized, setting running to false");
+
 		Source = GetComponentInParent<BasicUnit> ();
 		validTargetTags = validTargetTags ?? new List<BasicUnit.Tag>();
 		requiredTargetTags = requiredTargetTags ?? new List<BasicUnit.Tag>();
 		excludedTargetTags = excludedTargetTags ?? new List<BasicUnit.Tag>();
+		summonedUnits = summonedUnits ?? new List<BasicUnit> ();
+		remainingCooldown = cooldown;
 	}
 
 	public void Update()
 	{
-		if (!casting)
-			remainingCooldown = Mathf.Max (0, remainingCooldown - Time.deltaTime);
+		if (!running) {
+			//Debug.Log("Cooling down...");
+			remainingCooldown = Tools.DecrementTimer (remainingCooldown);
+		}
 		else {
 			if(casting)
 				CastingLogic();
-			if(channeling)
+			else if(channeling)
 				ChannelLogic();
-			if(channelTime <= 0)
+			else
 				FinishAbility();
 		}
 	}
 
 	public bool CanCast()
 	{
-		return remainingCooldown > 0;
+
+		if (remainingCooldown <= 0) {
+
+			Debug.Log ("Cooldown is ready!");
+			return true;
+		} else
+			Debug.Log ("Cooldown not ready :(");
+		return false;
+	}
+
+	public void ResetAbility() //run this when selected
+	{
+		Debug.Log("Resetting Ability");
+		running = false;
+		casting = false;
+		channeling = false;
+		finished = false;
+		targets = new List<BasicUnit> ();
+
 	}
 
 	public void StartCasting(BasicUnit target)
 	{
+		Debug.Log ("StartCasting()");
 		running = true;
 		casting = true;
 		channeling = false;
-
 		remainingCastTime = castTime;
-		targets = new List<BasicUnit> ();
 		targets.Add (target);
 	}
 
 	void CastingLogic()
 	{
-		remainingCastTime -= Time.deltaTime;
+		Debug.Log ("CastingLogic()");
+		remainingCastTime = Tools.DecrementTimer (remainingCastTime);
 		if(remainingCastTime <= 0)
 			StartChanneling();
 	}
 
 	void StartChanneling()
 	{
+		Debug.Log ("StartChanneling()");
+		//Source.GetComponent<LineRenderer> ().enabled = true;
 		casting = false;
 		channeling = true;
+
+		remainingChannelTime = channelTime;
 
 		foreach (BasicUnit targetUnit in targets) {
 			foreach(BasicBuff buff in initialBuffsPlaced)
@@ -125,24 +157,26 @@ public class BasicAbility : MonoBehaviour {
 
 	void ChannelLogic()
 	{
-		Debug.Log ("Channeling!!");
-		LineRenderer lineRenderer = Source.GetComponent<LineRenderer> ();
+//		Debug.Log ("ChannelLogic()");
+		LineRenderer lineRenderer = Source.gameObject.GetComponent<LineRenderer> ();
 		lineRenderer.enabled = true;
-		lineRenderer.SetPosition(0, transform.position);
+		lineRenderer.SetPosition(0, Source.gameObject.transform.position);
 		lineRenderer.SetPosition(1, initialTarget.transform.position);
 
-		remainingChannelTime -= Time.deltaTime;
-		if(remainingChannelTime <= 0)
-			FinishAbility();
+		remainingChannelTime = Tools.DecrementTimer (remainingChannelTime);
+		if (remainingChannelTime <= 0)
+			channeling = false;
 	}
 
 	public void FinishAbility()
 	{
+		Debug.Log ("FinishAbility() - setting running to false");
 		if (Source != null) {
 			Source.GetComponent<LineRenderer> ().enabled = false;
 		}
 
 		remainingCooldown = cooldown;
+		finished = true;
 		casting = false;
 		channeling = false;
 		running = false;
@@ -150,7 +184,6 @@ public class BasicAbility : MonoBehaviour {
 			foreach(BasicUnit unit in targets)
 				Destroy(unit.gameObject);
 	}
-
 
 	public bool isValidTarget(BasicUnit potentialTarget)
 	{
