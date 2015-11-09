@@ -9,38 +9,82 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public string parentObjectName;
     public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self }
     public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned } //the probabilities of which state results after "Deciding" is determined per class
-    public enum Attribute { MoveSpeed, AttackSpeed, AttackDamage, MaxHealth, HealthRegen, MaxMana, ManaRegen }
+	public enum Stat{ Strength, Dexterity, Intelligence, Special}
+	public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxMana, ManaRegen }
 
-	public enum Stat{ Strength, Dexterity, Intelligence}
+	Dictionary<Attribute, float> baseAttributes;
+	Dictionary<Stat, float> baseStats;
+	public float initialStrength;
+	public float initialDexterity;
+	public float initialIntelligence;
+	public float initialSpecial; //used for structure abilities
+	public float levelUpStrength;
+	public float levelUpDexterity;
+	public float levelUpIntelligence;
+	public float levelUpSpecial;
 
-	Dictionary<Stat, int> stats;
 
 
-	public float GetStat(Stat stat)
+	void initializeStatsAndAttributes()
 	{
-		return 1f;
+		baseStats = new Dictionary<Stat, float> ();
+		baseStats.Add (Stat.Strength, initialStrength);
+		baseStats.Add (Stat.Intelligence, initialIntelligence);
+		baseStats.Add (Stat.Dexterity, initialDexterity);
+		baseStats.Add (Stat.Special, initialSpecial);
+
+		baseAttributes = new Dictionary<Attribute, float> ();
+		baseAttributes.Add (Attribute.AttackSpeed, 0);
+		baseAttributes.Add (Attribute.HealthRegen, 0);
+		baseAttributes.Add (Attribute.MagicDamage, 0);
+		baseAttributes.Add (Attribute.ManaRegen, 0);
+		baseAttributes.Add (Attribute.MaxHealth, 0);
+		baseAttributes.Add (Attribute.MaxMana, 0);
+		baseAttributes.Add (Attribute.MoveSpeed, agent?agent.speed:0);
+		baseAttributes.Add (Attribute.None, 0);
+		baseAttributes.Add (Attribute.PhysicalDamage, 0);
 	}
 
 
-	/*public Dictionary<Stat, int> GetStats
+	public float GetStat(Stat stat) //stat mods are added or subtracted
 	{
-		get
-		{
-			Dictionary<Stat, int> tempStats = new Dictionary<Stat, int>();
-			foreach (Stat stat in Stats.Keys)
-				tempStats.Add(stat, Stats[stat]);
-			
-			foreach (BasicItem buff in Buffs)
-				foreach (Stat stat in buff.StatModifiers.Keys)
-					tempStats[stat] += buff.StatModifiers[stat];
-			
-			foreach (Loot loot in Equipment.Values)
-				foreach (Stat stat in loot.StatModifiers.Keys)
-					tempStats[stat] += loot.StatModifiers[stat];
-			
-			return tempStats;
+		float baseStat = baseStats [stat];
+
+		for (int i = 0; i< EquipmentSlots.Count(); i++) {
+			BasicItem item = EquipmentSlots[i].Instance;
+			if(item!=null)
+			{
+				for(int j =0; j <item.StatEffects.Count(); j++)
+					if(item.StatEffects[j].stat == stat)
+						baseStat += item.StatEffects[j].value;
+			}
 		}
-	}*/
+		return baseStat;
+	}
+
+
+	//used in attribute accessors
+	public float GetAttribute(Attribute attribute) //attribute modifiers are multiplied
+	{
+		float baseAttribute = baseAttributes [attribute];
+		
+		for (int i = 0; i< EquipmentSlots.Count(); i++) {
+			BasicItem item = EquipmentSlots[i].Instance;
+			if(item!=null)
+			{
+				for(int j =0; j <item.AttributeEffects.Count(); j++)
+					if(item.AttributeEffects[j].attribute == attribute)
+						baseAttribute += item.AttributeEffects[j].value;
+			}
+		}
+		return baseAttribute;
+	}
+
+	//Attribute Accessors
+	public float getMaxHP { get { return (GetStat(Stat.Strength) * 10) + GetAttribute(Attribute.MaxHealth); } }
+
+
+
 
     public Team team;
 
@@ -77,32 +121,19 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     //state logic
     public State currentState;
 
-    //Combat Traits
-    public float maxHealth;
+    //Search Radii
     public float currentHealth;
-    float huntSearchRadius = 20;
-    float storeSearchRadius = 1000;
+    float huntSearchRadius = 20f;
+    float storeSearchRadius = 1000f;
     float deathGiftRadius = 20f;
     float cryForHelpRadius = 10f;
-    public float attackRadius = 4;
-   // public float attackDamage;
-   // public float attackCooldown;
-   // float remainingAttackCooldown;
-    //float attackDuration = 1f;
-    //float remainingAttackDuration;
-    
-   /* public List<Tag> AbilityTags;
-    public List<Tag> RequiredAbilityTags;
-    public List<Tag> ExcludedAbilityTags;*/
+	public float exploreRadius = 50f;
 
-    //Combat Accessors
-//    float FinalAttackDamage { get { return attackDamage + Level; } }
+	public bool tetheredToHome = false;
 
-    //Movement Traits
-    float MoveSpeed;
+   
 
     //Automatic Spawning
-    //public bool Structure = false;
     public bool abilityHeals = false;
     public bool autoSpawningEnabled = false;
     public int spawnGoldCost;
@@ -124,11 +155,12 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         agent = GetComponent<NavMeshAgent>();
         lineRenderer = GetComponent<LineRenderer>();
         renderer = GetComponent<Renderer>();
-        currentHealth = maxHealth;
         Spawns = new List<GameObject>();
-
         Tags = Tags ?? new List<Tag>();
 		Abilities = Abilities ?? new List<BasicAbility> ();
+
+		initializeStatsAndAttributes ();
+		currentHealth = getMaxHP;
 
 		for (int i = 0; i<Abilities.Count; i++) {
 			{
@@ -137,8 +169,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 			}
 		}
 
-
-       
         XP = Mathf.Pow(Level,2);
 
         if (team == null && Tags.Contains(Tag.Imperial)) // && !spawnedByStructure
@@ -147,7 +177,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
         if (Tags.Contains(Tag.Structure)) //Structure Setup
         {
-            //currentState = State.None; //just for now, will modify thinking table when implemented
             corpseDuration = 0;
             currentState = State.Structure;
         }
@@ -155,15 +184,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         {
             currentState = State.Deciding;
             corpseDuration = 10;
-            MoveSpeed = agent.speed;
-            agent.stoppingDistance = attackRadius - 1;
+            agent.stoppingDistance = 2;
             if (Tags.Contains(Tag.Imperial))
                 canLevelUp = true;
         }
 
-
-//        remainingAttackDuration = attackDuration;
-        remainingCorpseDuration = corpseDuration;
         
         lineRenderer.material.color = renderer.material.color;
     }
@@ -207,8 +232,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void ExploreLogic()
     {
-        if (ExploreTarget == Vector3.zero)
-            ExploreTarget = new Vector3(Random.Range(0,GameManager.Main.MapBounds.x), 2, Random.Range(0,GameManager.Main.MapBounds.z));
+        if (ExploreTarget == Vector3.zero) {
+			ExploreTarget = tetheredToHome && Home!=null? Home.transform.position: transform.position;
+			ExploreTarget += new Vector3(Random.Range(-1f,1f),0,Random.Range(-1f,1f)) * exploreRadius;
+			ExploreTarget = new Vector3(Mathf.Max(0,Mathf.Min(ExploreTarget.x,GameManager.Main.MapBounds.x)), transform.position.y,Mathf.Max(0,Mathf.Min(ExploreTarget.z,GameManager.Main.MapBounds.z)));
+		}
         agent.SetDestination(ExploreTarget);
         if (Vector3.Distance(ExploreTarget, transform.position) < agent.stoppingDistance+4)
             StopExploring();
@@ -232,9 +260,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         ExploreTarget = Vector3.zero;
 
         float RandomSelection = Random.Range(0, 100);
-        if (RandomSelection < 99)
+        if (RandomSelection < 70)
 			StartHunting ();
-		else if (RandomSelection < 60)
+		else if (RandomSelection < 80)
 			StartShopping ();
 		else
 			StartExploring ();
@@ -276,6 +304,14 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         {
             for (int slot = 0; slot < EquipmentSlots.Count(); slot++)
             {
+				if(MoveTarget == null)
+				{
+					Debug.Log(gameObject.name+" experienced error in mode "+currentState.ToString()); 
+					Debug.Log(MoveTarget.name +" is null");
+				}
+				if(MoveTargetUnit.ProductsSold == null)
+					Debug.Log(MoveTarget.name + "sells no products");
+
                 BasicItem soldItem = MoveTargetUnit.ProductsSold[product];
                 if (EquipmentSlots[slot].Type == soldItem.Type)
                 {
@@ -286,6 +322,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                         EquipmentSlots[slot].Instance = Instantiate(soldItem.gameObject).GetComponent<BasicItem>();
                         Debug.Log(gameObject.name + " bought " + EquipmentSlots[slot].Instance.name + " from " + MoveTarget + ".");
                         DoneShopping();
+						return;
                     }
                 }
             }
@@ -328,8 +365,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         while (Spawns.Contains(null))
             Spawns.Remove(null);
 
-      //  remainingAttackCooldown -= Time.deltaTime;
-      //  remainingAttackCooldown = Mathf.Max(0, remainingAttackCooldown);
 
         //Move Towards Target's new position
         if (agent != null && agent.isActiveAndEnabled)
@@ -377,7 +412,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void StartHunting()
     {
-		Debug.Log ("Starting the Hunt!");
+		//Debug.Log ("Starting the Hunt!");
         currentState = State.Hunting;
     }
 
@@ -390,7 +425,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         
         if(MoveTarget == null) //find unit to focus on
         {
-			Debug.Log("Choosing New Move Target");
+			//Debug.Log("Choosing New Move Target");
             List<BasicUnit> acceptableTargets = chooseAbilityAndFindPossibleTargets();
 
             acceptableTargets = SortByDistance(acceptableTargets);
@@ -436,7 +471,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 	{
 		currentAbility = pickedAbility;
 		currentAbility.ResetAbility();
-		agent.stoppingDistance = currentAbility.range - 1;
+		agent.stoppingDistance = currentAbility.range - 3;
 	}
 
 	void PickAbility()
@@ -456,29 +491,29 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         BasicUnit initialAbilityTarget = MoveTargetUnit;
 		if (currentAbility == null) {
 			PickAbility();
-			Debug.Log ("Picking new Ability!");
+			//Debug.Log ("Picking new Ability!");
 
 		} 
 
         if (!currentAbility.isValidTarget(initialAbilityTarget)) {
-			Debug.Log("Initial target no longer valid! Cancelling ability use.");
+			//Debug.Log("Initial target no longer valid! Cancelling ability use.");
 			InterruptAbility ();
 			return;
 		}
 
 		if (currentAbility.isWithinRange (initialAbilityTarget)) {
-			Debug.Log ("In range of ability!");
+			//Debug.Log ("In range of ability!");
 			if (currentAbility.CanCast() && !currentAbility.running) {
 				currentAbility.StartCasting (initialAbilityTarget);
 			}
-			else
-				Debug.Log ("Can't cast because cooldown or ability already running");
+			//else
+				//Debug.Log ("Can't cast because cooldown or ability already running");
 		} else {
-			Debug.Log ("Not in range to use ability.");
+			//Debug.Log ("Not in range to use ability.");
 		}
 
 		if (currentAbility.finished) {
-			Debug.Log("Ability has finished so shutting down hunt.");
+			//Debug.Log("Ability has finished so shutting down hunt.");
 			StopHunting();
 			return;
 		}
@@ -487,7 +522,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     void InterruptAbility()
     {
 		if (currentAbility != null && !currentAbility.finished) {
-			Debug.Log ("Ability Interrupted");
+			//Debug.Log ("Ability Interrupted");
 			currentAbility.FinishAbility();
 		}
 		currentAbility = null;
@@ -511,7 +546,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 			if(acceptableTargets.Count>0)
 			{
 				PickAbility(potentialAbility);
-				Debug.Log("Chose ability from options");
+				//Debug.Log("Chose ability from options");
 				return acceptableTargets;
 			}
 		}
@@ -524,19 +559,20 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         currentHealth -= Mathf.Max(0,damage);
         if (currentState != State.Hunting)
             DecideLogic();
-        else if (currentHealth / maxHealth < .3f)
+        else if (currentHealth / getMaxHP < .3f)
             DecideLogic();
     }
 
     public void TakeHealing(float damage, BasicUnit source)
     {
         currentHealth += Mathf.Max(0,damage);
-        currentHealth = Mathf.Min(currentHealth, maxHealth);
+        currentHealth = Mathf.Min(currentHealth, getMaxHP);
     }
 
     void Die()
     {
         if (currentState != State.Dead) { //then initialize the death state
+			remainingCorpseDuration = corpseDuration;
 			currentState = State.Dead;
 			Tags.Add (Tag.Dead);
 
@@ -550,7 +586,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
 			renderer.material.color = Color.grey;
 
-
 			InterruptAbility ();
 		}
 
@@ -562,6 +597,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             Destroy(gameObject);
         }
     }
+
 
     void OnDeathDistributeGoldAndXP()
     {
@@ -604,7 +640,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     public bool AtMaxHealth()
     {
-        return currentHealth >= maxHealth;
+        return currentHealth >= getMaxHP;
     }
 
     void GainGold(int goldAmount)
@@ -619,7 +655,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void GainXP(float xpAmount)
     {
-        Debug.Log(gameObject.name + " earned " + xpAmount + " XP");
+       // Debug.Log(gameObject.name + " earned " + xpAmount + " XP");
 
         XP += xpAmount; 
         int proposedNewLevel = (int)Mathf.Sqrt(XP);
@@ -627,17 +663,18 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             LevelUp();
     }
 
-    void LevelUp()
+	void LevelUp() //add visual and sound effects
     {
-       
-        Level++; //add visual and sound effects
+        Level++; 
         Debug.Log(gameObject.name + " leveled up to " + Level + "!");
         gameObject.name = (parentObjectName.Length ==0 ? gameObject.name : parentObjectName) + " " + Level;
 
-        //temporary level up effects
-        maxHealth *= 1.2f;
-        currentHealth = maxHealth;
-//        attackDamage *= 1.2f;
+		baseStats[Stat.Strength] += levelUpStrength;
+		baseStats[Stat.Dexterity] += levelUpDexterity;
+		baseStats[Stat.Intelligence] += levelUpIntelligence;
+		baseStats [Stat.Special] += levelUpSpecial;
+
+        currentHealth = getMaxHP;
     }
 
     void BroadcastCryForHelp(BasicUnit attacker)

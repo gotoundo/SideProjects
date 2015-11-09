@@ -1,10 +1,12 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/BasicAbility.cs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/BasicUnit.cs">
     <Files>
-      <File FileName="Assets/BasicAbility.cs" Line="88" Column="23" />
-      <File FileName="Assets/BasicUnit.cs" Line="491" Column="26" />
+      <File FileName="Assets/BasicUnit.cs" Line="325" Column="14" />
+      <File FileName="Assets/BasicAbility.cs" Line="1" Column="1" />
       <File FileName="Assets/BasicBuff.cs" Line="1" Column="1" />
+      <File FileName="Assets/BasicItem.cs" Line="1" Column="1" />
+      <File FileName="Assets/UIInspectorPanel.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

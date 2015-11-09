@@ -17,5 +17,13 @@ public class BasicItem : MonoBehaviour
         public float value;
     }
 
+	[System.Serializable]
+	public class StatEffect
+	{
+		public BasicUnit.Stat stat;
+		public float value;
+	}
+
     public AttributeEffect[] AttributeEffects;
+	public StatEffect[] StatEffects;
 }

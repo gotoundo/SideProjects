@@ -27,8 +27,16 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
 	
 	// Update is called once per frame
 	void Update () {
+		BasicUnit inspectedUnit = GameManager.Main.InspectedUnit;
         
-
+		text.text = inspectedUnit.name;
+		text.text += "\n" + inspectedUnit.currentState.ToString();
+		text.text += "\n" + inspectedUnit.currentHealth + "/" + inspectedUnit.getMaxHP+" HP";
+		text.text += "\n" + inspectedUnit.Gold + " Gold";
+		for (int i =0; i<inspectedUnit.EquipmentSlots.Length; i++) {
+			if(inspectedUnit.EquipmentSlots[i].Instance!=null)
+				text.text += "\n Item: "+inspectedUnit.EquipmentSlots[i].Instance.name;
+		}
     }
 
     public void InspectNewObject()

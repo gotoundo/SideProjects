@@ -15,6 +15,7 @@ public class BasicBuff : MonoBehaviour { //attached to
 	//Specified in the Inspector
 	public Effect effect = Effect.Damage;
 	public BasicUnit.Stat statUsed = BasicUnit.Stat.Strength;
+	public BasicUnit.Attribute attributeUsed = BasicUnit.Attribute.None;
 	public float statRatio = 1; //for example, if 1.5, use Int * 1.5 for immediate damage
 	public float statPerSecRatio = 0;
 	public float duration = 0; //0 for immediate effects
@@ -23,7 +24,7 @@ public class BasicBuff : MonoBehaviour { //attached to
 	//Specified when Instantiated by an Ability
 	BasicUnit Source;
 	BasicUnit Target;
-	float statValue;
+	float totalEffectPower;
 	
 	// Use this for initialization
 	void Start () {
@@ -35,7 +36,7 @@ public class BasicBuff : MonoBehaviour { //attached to
 	{
 		this.Source = Source;
 		this.Target = Target;
-		statValue = Source.GetStat (statUsed);
+		totalEffectPower = Source.GetStat (statUsed)+Source.GetAttribute(attributeUsed);
 	}
 	
 	// Update is called once per frame
@@ -46,7 +47,7 @@ public class BasicBuff : MonoBehaviour { //attached to
 
 	void TickEffect(bool firstTurn)
 	{
-		float effectPower = statValue * (firstTurn ? statRatio : statPerSecRatio * Time.deltaTime);
+		float effectPower = totalEffectPower * (firstTurn ? statRatio : statPerSecRatio * Time.deltaTime);
 
 		switch (effect) {
 		case Effect.Damage:

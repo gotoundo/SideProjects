@@ -59,7 +59,7 @@ public class BasicAbility : MonoBehaviour {
 
 	public void Start()
 	{
-		Debug.Log ("Ability initialized, setting running to false");
+		//Debug.Log ("Ability initialized, setting running to false");
 
 		Source = GetComponentInParent<BasicUnit> ();
 		validTargetTags = validTargetTags ?? new List<BasicUnit.Tag>();
@@ -90,16 +90,16 @@ public class BasicAbility : MonoBehaviour {
 
 		if (remainingCooldown <= 0) {
 
-			Debug.Log ("Cooldown is ready!");
+		//	Debug.Log ("Cooldown is ready!");
 			return true;
-		} else
-			Debug.Log ("Cooldown not ready :(");
+		} /*else
+			Debug.Log ("Cooldown not ready :(");*/
 		return false;
 	}
 
 	public void ResetAbility() //run this when selected
 	{
-		Debug.Log("Resetting Ability");
+	//	Debug.Log("Resetting Ability");
 		running = false;
 		casting = false;
 		channeling = false;
@@ -110,7 +110,7 @@ public class BasicAbility : MonoBehaviour {
 
 	public void StartCasting(BasicUnit target)
 	{
-		Debug.Log ("StartCasting()");
+		//Debug.Log ("StartCasting()");
 		running = true;
 		casting = true;
 		channeling = false;
@@ -120,7 +120,7 @@ public class BasicAbility : MonoBehaviour {
 
 	void CastingLogic()
 	{
-		Debug.Log ("CastingLogic()");
+		//Debug.Log ("CastingLogic()");
 		remainingCastTime = Tools.DecrementTimer (remainingCastTime);
 		if(remainingCastTime <= 0)
 			StartChanneling();
@@ -128,7 +128,7 @@ public class BasicAbility : MonoBehaviour {
 
 	void StartChanneling()
 	{
-		Debug.Log ("StartChanneling()");
+		//Debug.Log ("StartChanneling()");
 		//Source.GetComponent<LineRenderer> ().enabled = true;
 		casting = false;
 		channeling = true;
@@ -170,7 +170,7 @@ public class BasicAbility : MonoBehaviour {
 
 	public void FinishAbility()
 	{
-		Debug.Log ("FinishAbility() - setting running to false");
+		//Debug.Log ("FinishAbility() - setting running to false");
 		if (Source != null) {
 			Source.GetComponent<LineRenderer> ().enabled = false;
 		}
