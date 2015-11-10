@@ -10,7 +10,7 @@ public static class Tools
 }
 
 public class BasicBuff : MonoBehaviour { //attached to 
-	public enum Effect {Damage, Healing, Stun, Confusion}
+	public enum Effect {None, Damage, Healing, Stun, Confusion}
 
 	//Specified in the Inspector
 	public Effect effect = Effect.Damage;
@@ -19,6 +19,7 @@ public class BasicBuff : MonoBehaviour { //attached to
 	public float statRatio = 1; //for example, if 1.5, use Int * 1.5 for immediate damage
 	public float statPerSecRatio = 0;
 	public float duration = 0; //0 for immediate effects
+    public List<BasicUnit.Tag> TemporaryTags;
 
 
 	//Specified when Instantiated by an Ability
@@ -47,6 +48,11 @@ public class BasicBuff : MonoBehaviour { //attached to
 
 	void TickEffect(bool firstTurn)
 	{
+        if (firstTurn && TemporaryTags != null)
+            foreach (BasicUnit.Tag tag in TemporaryTags)
+                Target.Tags.Add(tag);
+
+
 		float effectPower = totalEffectPower * (firstTurn ? statRatio : statPerSecRatio * Time.deltaTime);
 
 		switch (effect) {
@@ -74,6 +80,10 @@ public class BasicBuff : MonoBehaviour { //attached to
 
 	public void EndBuff()
 	{
+        if (Target != null && TemporaryTags != null)
+            foreach (BasicUnit.Tag tag in TemporaryTags)
+                Target.Tags.Remove(tag);
+
 		Destroy (gameObject);
 	}
 

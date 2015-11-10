@@ -57,6 +57,12 @@
     <Reference Include="UnityEngine.Networking">
       <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.Networking">
+      <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>Library\UnityAssemblies\UnityEngine.UI.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor">
       <HintPath>Library\UnityAssemblies\UnityEditor.dll</HintPath>
     </Reference>
@@ -68,11 +74,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\BasicAbility.cs" />
+    <Compile Include="Assets\BasicBuff.cs" />
     <Compile Include="Assets\BasicItem.cs" />
+    <Compile Include="Assets\BasicMotivations.cs" />
     <Compile Include="Assets\BasicUnit.cs" />
+    <Compile Include="Assets\BasicUpgrade.cs" />
     <Compile Include="Assets\GameManager.cs" />
-    <Compile Include="Assets\Player.cs" />
     <Compile Include="Assets\Team.cs" />
+    <Compile Include="Assets\TraitModifier.cs" />
+    <Compile Include="Assets\UIBuildingsPanel.cs" />
     <Compile Include="Assets\UIBuyStructure.cs" />
     <Compile Include="Assets\UIDeselectionObject.cs" />
     <Compile Include="Assets\UIInspectorPanel.cs" />

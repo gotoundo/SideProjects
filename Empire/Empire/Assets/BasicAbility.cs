@@ -16,7 +16,11 @@ public class BasicAbility : MonoBehaviour {
 	public float castTime;
 	public float channelTime;
 	public float cooldown;
+
 	public List<BasicUnit> summonedUnits;
+    public int maxSummonedUnits;
+    public List<BasicUnit> existingSummonedUnits;
+
 	public bool consumesTargets = false;
 	public bool abilityOnlyHeals = false;
 	List<BasicUnit> targets;
@@ -55,13 +59,15 @@ public class BasicAbility : MonoBehaviour {
 	{
 
 		ResetAbility ();
-	}
+        existingSummonedUnits = new List<BasicUnit>();
+    }
 
 	public void Start()
 	{
 		//Debug.Log ("Ability initialized, setting running to false");
 
 		Source = GetComponentInParent<BasicUnit> ();
+        transform.localPosition = Vector3.zero;
 		validTargetTags = validTargetTags ?? new List<BasicUnit.Tag>();
 		requiredTargetTags = requiredTargetTags ?? new List<BasicUnit.Tag>();
 		excludedTargetTags = excludedTargetTags ?? new List<BasicUnit.Tag>();
@@ -71,6 +77,9 @@ public class BasicAbility : MonoBehaviour {
 
 	public void Update()
 	{
+        while (existingSummonedUnits.Contains(null))
+            existingSummonedUnits.Remove(null);
+
 		if (!running) {
 			//Debug.Log("Cooling down...");
 			remainingCooldown = Tools.DecrementTimer (remainingCooldown);
@@ -87,14 +96,10 @@ public class BasicAbility : MonoBehaviour {
 
 	public bool CanCast()
 	{
+        if (summonedUnits.Count>0 && existingSummonedUnits.Count >= maxSummonedUnits)
+            return false;
 
-		if (remainingCooldown <= 0) {
-
-		//	Debug.Log ("Cooldown is ready!");
-			return true;
-		} /*else
-			Debug.Log ("Cooldown not ready :(");*/
-		return false;
+        return remainingCooldown <= 0;
 	}
 
 	public void ResetAbility() //run this when selected
@@ -149,13 +154,18 @@ public class BasicAbility : MonoBehaviour {
 
 		foreach(BasicUnit summonedUnit in summonedUnits)
 		{
-			GameObject unit = Instantiate(summonedUnit.gameObject);
+            if(Source!=null && initialTarget != null)
+            {
+                BasicUnit spawnedUnit = Source.Spawn(summonedUnit.gameObject, initialTarget.gameObject.transform.position);
+                existingSummonedUnits.Add(spawnedUnit);
+            }
+			/*GameObject unit = Instantiate(summonedUnit.gameObject);
 			if(initialTarget!=null)
 			{
 				unit.transform.position = initialTarget.gameObject.transform.position;
 			}
 			if(Source!=null)
-				unit.GetComponent<BasicUnit>().team = Source.team;
+				unit.GetComponent<BasicUnit>().team = Source.team;*/
 		}
 	}
 

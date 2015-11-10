@@ -16,7 +16,7 @@ public class UIBuyStructure : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        UIButton.enabled = GameManager.Main.Player.CanAffordStructure(StructureTemplate);
+        UIButton.interactable = GameManager.Main.Player.CanAffordStructure(StructureTemplate);
     }
     public void BuyStructure()
     {

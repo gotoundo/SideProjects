@@ -6,8 +6,9 @@ using UnityEngine.EventSystems;
 
 
 public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
+    public GameObject myTemplate;
     public string parentObjectName;
-    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self }
+    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed}
     public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned } //the probabilities of which state results after "Deciding" is determined per class
 	public enum Stat{ Strength, Dexterity, Intelligence, Special}
 	public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxMana, ManaRegen }
@@ -134,22 +135,22 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
    
 
-    //Automatic Spawning
-    public bool abilityHeals = false;
+    
+    
+    //Spawning
     public bool autoSpawningEnabled = false;
     public int spawnGoldCost;
     public GameObject SpawnType;
     public int MaxSpawns = 0;
     public float SpawnCooldown = 3;
     private float RemainingSpawnCooldown;
-
-    private List<GameObject> Spawns;
+    public List<GameObject> Spawns;
 
     float corpseDuration = 0;
     float remainingCorpseDuration;
 
     bool spawnedByStructure = false;
-    bool canLevelUp = false;
+   // bool canLevelUp = false;
 
 	public float remainingDecideTime;
     
@@ -187,10 +188,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         else //Normal Unit Setup
         {
             currentState = State.Deciding;
-            corpseDuration = 10;
+            corpseDuration = 15;
             agent.stoppingDistance = 2;
-            if (Tags.Contains(Tag.Imperial))
-                canLevelUp = true;
+            //if (Tags.Contains(Tag.Imperial))
+               // canLevelUp = true;
         }
 
         
@@ -403,31 +404,32 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         RemainingSpawnCooldown -= Time.deltaTime;
         if(RemainingSpawnCooldown <= 0)
         {
-            Spawn();
+            Spawn(SpawnType,transform.position);
         }
     }
 
     public bool CanSpawn()
     {
-        return spawnGoldCost <= Gold;
+        return (spawnGoldCost <= Gold);
     }
 
-    public void Spawn()
+    public BasicUnit Spawn(GameObject template, Vector3 position)
     {
         RemainingSpawnCooldown = SpawnCooldown;
 
-        GameObject spawnedObject = (GameObject)Instantiate(SpawnType, transform.position, transform.rotation);
+        GameObject spawnedObject = (GameObject)Instantiate(template, position, transform.rotation);
         Spawns.Add(spawnedObject);
         BasicUnit spawnedUnit = spawnedObject.GetComponent<BasicUnit>();
+        spawnedUnit.myTemplate = template;
         spawnedUnit.Home = gameObject;
         spawnedUnit.spawnedByStructure = true;
-        spawnedUnit.parentObjectName = SpawnType.gameObject.name;
-        spawnedObject.name = SpawnType.name;
+        spawnedUnit.parentObjectName = template.gameObject.name;
+        spawnedObject.name = template.name;
 
-            //spawnedByStructure
-
+        return spawnedUnit;
         //spawn.GetComponent<BasicUnit>().team = team; //right now it is automatically being set by monster or imperial tag
     }
+
 
     void StartHunting()
     {
@@ -609,7 +611,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		}
 
         remainingCorpseDuration -= Time.deltaTime;
-        if (remainingCorpseDuration <= 0)
+        if (remainingCorpseDuration <= 0 && !Tags.Contains(Tag.Consumed))
         {
             if (Tags.Contains(Tag.Imperial))
                 OnDeathDistributeGoldAndXP();
@@ -626,7 +628,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         foreach (Collider col in hitColliders)
         {
             BasicUnit NearbyUnit = col.gameObject.GetComponent<BasicUnit>();
-            if (NearbyUnit != null && !NearbyUnit.Tags.Contains(Tag.Structure) && !NearbyUnit.Tags.Contains(Tag.Dead) && NearbyUnit.team != team)
+            if (NearbyUnit != null && !NearbyUnit.Tags.Contains(Tag.Structure) && !NearbyUnit.Tags.Contains(Tag.Dead) && NearbyUnit.team != team )
                 goldRecipients.Add(col.gameObject.GetComponent<BasicUnit>());
         }
         int initialGold = Gold;
@@ -650,7 +652,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         foreach (Collider col in hitColliders)
         {
             BasicUnit NearbyUnit = col.gameObject.GetComponent<BasicUnit>();
-            if (NearbyUnit != null && !NearbyUnit.Tags.Contains(Tag.Structure) && !NearbyUnit.Tags.Contains(Tag.Dead) && NearbyUnit.team != team && NearbyUnit.canLevelUp)
+            if (NearbyUnit != null && !NearbyUnit.Tags.Contains(Tag.Structure) && !NearbyUnit.Tags.Contains(Tag.Dead) && NearbyUnit.team != team && NearbyUnit.Tags.Contains(Tag.Hero))
                 xpRecipients.Add(col.gameObject.GetComponent<BasicUnit>());
         }
         foreach (BasicUnit xpRecipient in xpRecipients)
@@ -678,7 +680,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
         XP += xpAmount; 
         int proposedNewLevel = (int)Mathf.Sqrt(XP);
-        while (Level < proposedNewLevel && canLevelUp)
+        while (Level < proposedNewLevel)
             LevelUp();
     }
 
