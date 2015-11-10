@@ -92,6 +92,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public float XP; //make private
     public int Level;
 
+	//public List<Motive
 	public List<BasicAbility> Abilities;
 	BasicAbility currentAbility;
 
@@ -141,6 +142,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public int MaxSpawns = 0;
     public float SpawnCooldown = 3;
     private float RemainingSpawnCooldown;
+
     private List<GameObject> Spawns;
 
     float corpseDuration = 0;
@@ -148,6 +150,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     bool spawnedByStructure = false;
     bool canLevelUp = false;
+
+	public float remainingDecideTime;
     
 
     // Use this for initialization
@@ -248,6 +252,18 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         ExploreTarget = Vector3.zero;
     }
 
+
+	void StartDeciding()
+	{
+		if(Tags.Contains(Tag.Structure))
+		{
+			currentState = State.Structure;
+			return;
+		}
+		currentState = State.Deciding;
+		remainingDecideTime = 1;
+	}
+
     void DecideLogic()
     {
         if(Tags.Contains(Tag.Structure))
@@ -299,36 +315,39 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void BrowseWares()
     {
-        int amount = new List<BasicItem>(MoveTargetUnit.ProductsSold).Count; //if you put this in the for loop it fucking explodes
-        for (int product = 0; product < amount; product++)
-        {
-            for (int slot = 0; slot < EquipmentSlots.Count(); slot++)
-            {
-				if(MoveTarget == null)
+		int amount = new List<BasicItem> (MoveTargetUnit.ProductsSold).Count; //if you put this in the for loop it fucking explodes
+		for (int product = 0; product < amount; product++) {
+			for (int slot = 0; slot < EquipmentSlots.Count(); slot++) {
+				/*if(MoveTarget == null)
 				{
 					Debug.Log(gameObject.name+" experienced error in mode "+currentState.ToString()); 
 					Debug.Log(MoveTarget.name +" is null");
-				}
-				if(MoveTargetUnit.ProductsSold == null)
-					Debug.Log(MoveTarget.name + "sells no products");
+				}*/
+				if (MoveTargetUnit.ProductsSold == null)
+					Debug.Log (MoveTarget.name + "sells no products");
 
-                BasicItem soldItem = MoveTargetUnit.ProductsSold[product];
-                if (EquipmentSlots[slot].Type == soldItem.Type)
-                {
-                    if (EquipmentSlots[slot].Instance == null || soldItem.Level > EquipmentSlots[slot].Instance.Level)
-                    {
-                        Gold -= soldItem.Cost;
-                        MoveTargetUnit.GainGold(soldItem.Cost);
-                        EquipmentSlots[slot].Instance = Instantiate(soldItem.gameObject).GetComponent<BasicItem>();
-                        Debug.Log(gameObject.name + " bought " + EquipmentSlots[slot].Instance.name + " from " + MoveTarget + ".");
-                        DoneShopping();
-						return;
-                    }
-                }
-            }
-        }
-        DoneShopping();
-    }
+				BasicItem soldItem = MoveTargetUnit.ProductsSold [product];
+				if (EquipmentSlots [slot].Type == soldItem.Type) {
+					if (EquipmentSlots [slot].Instance == null || soldItem.Level > EquipmentSlots [slot].Instance.Level) {
+						if (soldItem.Cost <= Gold) {
+							BuyItem (soldItem, slot);
+							DoneShopping ();
+							return;
+						}
+					}
+				}
+			}
+		}
+		DoneShopping ();
+	}
+
+	void BuyItem(BasicItem soldItem, int slot)
+	{
+		Gold -= soldItem.Cost;
+		MoveTargetUnit.GainGold(soldItem.Cost);
+		EquipmentSlots[slot].Instance = Instantiate(soldItem.gameObject).GetComponent<BasicItem>();
+		Debug.Log(gameObject.name + " bought " + EquipmentSlots[slot].Instance.name + " from " + MoveTarget + ".");
+	}
 
     void DoneShopping()
     {
@@ -559,7 +578,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         currentHealth -= Mathf.Max(0,damage);
         if (currentState != State.Hunting)
             DecideLogic();
-        else if (currentHealth / getMaxHP < .3f)
+        else if (currentHealth / getMaxHP < .15f)
             DecideLogic();
     }
 

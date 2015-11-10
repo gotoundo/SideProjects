@@ -48,6 +48,7 @@
      <Compile Include="Assets\BasicAbility.cs" />
      <Compile Include="Assets\BasicBuff.cs" />
      <Compile Include="Assets\BasicItem.cs" />
+     <Compile Include="Assets\BasicMotivations.cs" />
      <Compile Include="Assets\BasicUnit.cs" />
      <Compile Include="Assets\BasicUpgrade.cs" />
      <Compile Include="Assets\GameManager.cs" />

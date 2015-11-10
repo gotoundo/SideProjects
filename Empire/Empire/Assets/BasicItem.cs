@@ -5,10 +5,11 @@ using System.Linq;
 
 public class BasicItem : MonoBehaviour
 {
-    public enum ItemType { Sword, Shield, Armor, Consumable }
+    public enum ItemType { Sword, Shield, Armor, Potion }
     public ItemType Type;
     public int Level;
     public int Cost;
+	public bool Consumable = false;
 
     [System.Serializable]
     public class AttributeEffect

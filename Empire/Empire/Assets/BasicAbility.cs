@@ -150,6 +150,10 @@ public class BasicAbility : MonoBehaviour {
 		foreach(BasicUnit summonedUnit in summonedUnits)
 		{
 			GameObject unit = Instantiate(summonedUnit.gameObject);
+			if(initialTarget!=null)
+			{
+				unit.transform.position = initialTarget.gameObject.transform.position;
+			}
 			if(Source!=null)
 				unit.GetComponent<BasicUnit>().team = Source.team;
 		}
