@@ -10,9 +10,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     
     //Enumerations
     public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed}
-    public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned } //the probabilities of which state results after "Deciding" is determined per class
+    public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned, ExploreBounty,KillBounty,DefendBounty } //the probabilities of which state results after "Deciding" is determined per class
 	public enum Stat{ Strength, Dexterity, Intelligence, Special}
 	public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxMana, ManaRegen }
+
+    List<State> passiveStates = new List<State>( new State[] { State.Exploring, State.ExploreBounty, State.Shopping, State.Sleeping }); // these can be interrupted
 
 
     //Attributes and Stats
@@ -81,6 +83,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     
     //RPG Progression
     public int Gold;
+    public int guildDues;
     public float XP; //make private
     public int Level;
     public int GoldCost;
@@ -117,8 +120,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     GameObject Home;
     public GameObject MoveTarget;
     BasicUnit MoveTargetUnit { get { return MoveTarget ? MoveTarget.GetComponent<BasicUnit>() : null; } }
+    BasicBounty BountyTarget { get { return MoveTarget ? MoveTarget.GetComponent<BasicBounty>() : null; } }
+    BasicBounty LastPickedBounty;
     public Vector3 ExploreTarget;
-    bool spawnedByStructure = false;
+   // bool spawnedByStructure = false;
 
     //Search Radii
     float huntSearchRadius = 20f;
@@ -130,7 +135,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         
     //Spawning
     public bool autoSpawningEnabled = false;
-   // public int spawnGoldCost;
     public GameObject SpawnType;
     public int MaxSpawns = 0;
     public float SpawnCooldown = 3;
@@ -141,9 +145,15 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public float corpseDuration = 0;
     public float remainingCorpseDuration;
     public float remainingDecideTime; //not implemented yet
+    public float timeSinceLastDamage;
 
     //Other constants
-    const float stoppingDistanceMargin = 2;
+    const float stoppingDistanceMargin = 4;
+    const float sleepRegeneratePercentage = .02f;
+    const float fleeHealthPercentage = 0.33f;
+    const float goHomeHealthPercentage = 0.8f;
+    const float respondToCryForHelpChance = 0.5f;
+    const float guildTaxRate = 0.3f;
     
     // Use this for initialization
     void Start () {
@@ -174,26 +184,26 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         if (Tags.Contains(Tag.Structure)) //Structure Setup
         {
             corpseDuration = 0;
-            setNewState(State.Structure);
+            SetNewState(State.Structure);
         }
         else //Normal Unit Setup
         {
-            setNewState(State.Deciding);
+            SetNewState(State.Deciding);
             corpseDuration = 15;
             agent.stoppingDistance = 2;
         }
 
-        lineRenderer.material.color = renderer.material.color;
+       // lineRenderer.material.color = renderer.material.color;
     }
 	
 	// Update is called once per frame
 	void Update () {
+        timeSinceLastDamage += Time.deltaTime;
 
-        switch (currentState)
+        switch (currentState) //This is the only place the Logic functions should be called
         {
             case State.Deciding: //add a random duration - for structures this will be 0
                 DecideLogic();
-                
                 break;
             case State.Exploring:
                 ExploreLogic();
@@ -201,20 +211,25 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             case State.Hunting:
                 HuntingLogic();
                 break;
-            case State.InCombat:
-                break;
-            case State.Following:
-                break;
             case State.Shopping:
                 ShoppingLogic();
                 break;
             case State.GoingHome:
+                GoingHomeLogic();
                 break;
             case State.Sleeping:
+                SleepLogic();
+                break;
+            case State.Fleeing:
+                FleeingLogic();
                 break;
             case State.Dead:
                 Die();
                 break;
+            case State.ExploreBounty:
+                ExploreBountyLogic();
+                break;
+
             default:
                 break;
         }
@@ -226,7 +241,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         CleanUp();
 	}
 
-    void setNewState(State newState, string reason = "")
+    void SetNewState(State newState, string reason = "")
     {
         if (debugMode)
             Debug.Log(((int)GameManager.Main.playTime) + " | " + gameObject.name + " started " + newState.ToString() +": "+reason);
@@ -236,77 +251,220 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         MoveTarget = null;
         currentAbility = null;
         ExploreTarget = Vector3.zero;
+        //BountyTarget = null;
         currentState = newState;
     }
 
-    void ExploreLogic()
+    bool WithinActivationRange()
     {
-        agent.stoppingDistance = 2;
-        if (ExploreTarget == Vector3.zero) {
-			ExploreTarget = tetheredToHome && Home!=null? Home.transform.position: transform.position;
-			ExploreTarget += new Vector3(Random.Range(-1f,1f),0,Random.Range(-1f,1f)) * exploreRadius;
-			ExploreTarget = new Vector3(Mathf.Max(0,Mathf.Min(ExploreTarget.x,GameManager.Main.MapBounds.x)), transform.position.y,Mathf.Max(0,Mathf.Min(ExploreTarget.z,GameManager.Main.MapBounds.z)));
-		}
-        agent.SetDestination(ExploreTarget);
-        if (Vector3.Distance(ExploreTarget, transform.position) < agent.stoppingDistance + stoppingDistanceMargin)
-            StopExploring();
+        if (ExploreTarget != Vector3.zero && currentState == State.Exploring)
+            return Vector3.Distance(transform.position, ExploreTarget) < agent.stoppingDistance + stoppingDistanceMargin;
+        return Vector3.Distance(transform.position, MoveTarget.transform.position) < agent.stoppingDistance + stoppingDistanceMargin;
     }
 
-    void StopExploring()
+    void CleanUp()
     {
-        setNewState(State.Deciding);
+        if (currentHealth <= 0 && currentState != State.Dead)
+            Die();
+
+        while (Spawns.Contains(null))
+            Spawns.Remove(null);
+
+        //Move Towards Target's new position
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            if (MoveTarget != null)
+                agent.SetDestination(MoveTarget.transform.position);
+            else if (ExploreTarget == Vector3.zero)
+                agent.SetDestination(transform.position);
+        }
     }
 
-	void StartDeciding()
+
+
+    //GOING HOME
+    void StartGoingHome() {
+        SetNewState(State.GoingHome);
+    }
+    void GoingHomeLogic()
+    {
+        MoveTarget = Home;
+        if (MoveTarget == null)
+            StopFleeing();
+        else if (WithinActivationRange())
+        {
+            StopFleeing();
+            StartSleeping();
+        }
+    }
+    void StopGoingHome() {
+        SetNewState(State.Deciding);
+    }
+
+    //FLEEING - EXACTLY LIKE GOING HOME EXCEPT CAN'T BE INTERRUPTED
+    void StartFleeing()
+    {
+        SetNewState(State.Fleeing);
+    }
+    void FleeingLogic()
+    {
+        MoveTarget = Home;
+        if (MoveTarget == null)
+            StopFleeing();
+        else if (WithinActivationRange())
+        {
+            StopFleeing();
+            StartSleeping();
+        }
+    }
+    void StopFleeing()
+    {
+        SetNewState(State.Deciding);
+    }
+
+    //SLEEPING - WHEN SLEEPING, YOU GRADUALLY HEAL
+    void StartSleeping() {
+        SetNewState(State.Sleeping);
+        Home.GetComponent<BasicUnit>().GainGold(guildDues, false);
+        guildDues = 0;
+    }
+    void SleepLogic() {
+        DealHealing(sleepRegeneratePercentage * getMaxHP * Time.deltaTime, this);
+        if (currentHealth >= getMaxHP)
+            StopSleeping();
+    }
+    void StopSleeping() {
+        SetNewState(State.Deciding);
+    }
+    
+
+    void StartDeciding()
 	{
 		if(Tags.Contains(Tag.Structure))
 		{
-            setNewState(State.Structure);
+            SetNewState(State.Structure);
 			return;
 		}
-        setNewState(State.Deciding);
+        SetNewState(State.Deciding);
 		remainingDecideTime = 1;
 	}
 
     void DecideLogic()
     {
-        if(Tags.Contains(Tag.Dead))
+        if (Tags.Contains(Tag.Dead))
         {
             Die();
             return;
         }
 
-        if(Tags.Contains(Tag.Structure))
+        if (Tags.Contains(Tag.Structure))
         {
-            setNewState(State.Structure);
+            SetNewState(State.Structure);
             return;
         }
 
         float RandomSelection = Random.Range(0, 100);
-        if (RandomSelection < 70)
-			StartHunting ();
-		else if (RandomSelection < 85 && FindStore())
-			StartShopping ();
-		else
-			StartExploring ();
-            
+
+        if (Home != null && currentHealth / getMaxHP < fleeHealthPercentage && !HasHealingPotions() && !Tags.Contains(Tag.Monster))
+            StartFleeing();
+        else if (Home != null && RandomSelection < 10 && currentHealth / getMaxHP < goHomeHealthPercentage)
+            StartGoingHome();
+        else if (RandomSelection < 40)
+            StartHunting();
+        else if (RandomSelection < 60 && findStore())
+            StartShopping();
+        else if (RandomSelection < 80 && PickBounty() && team == GameManager.Main.Player)
+        {
+            if (BountyTarget.type == BasicBounty.Type.Explore)
+                StartExploreBounty();
+            else
+                EndBounty();
+        }
+        else
+            StartExploring();
+
     }
 
-	void StartShopping()
-	{
-        setNewState(State.Shopping);
-	}
+    bool HasHealingPotions()
+    {
+        return false;
+    }
 
+    bool PickBounty()
+    {
+        bool success = false;
+        if(GameManager.Main.AllBounties.Count > 0)
+        {
+            LastPickedBounty = GameManager.Main.AllBounties[Random.Range(0, GameManager.Main.AllBounties.Count - 1)];
+            MoveTarget = LastPickedBounty.gameObject;
+            success = true;
+        }
+        return success;
+    }
+
+    void StartExploreBounty()
+    {
+        agent.stoppingDistance = 4f;
+        SetNewState(State.ExploreBounty);
+        MoveTarget = LastPickedBounty.gameObject;
+    }
+
+    void ExploreBountyLogic()
+    {
+        if (BountyTarget == null)
+        {
+            EndBounty();
+            return;
+        }
+
+        if (WithinActivationRange())
+        {
+            BountyTarget.ClaimExploreBounty(this);
+            EndBounty();
+        }
+    }
+
+    void EndBounty()
+    {
+        SetNewState(State.Deciding);
+    }
+
+
+    
 	void StartExploring()
 	{
-        setNewState(State.Exploring);
+        SetNewState(State.Exploring);
 	}
+
+    void ExploreLogic()
+    {
+        agent.stoppingDistance = 2;
+        if (ExploreTarget == Vector3.zero)
+        {
+            ExploreTarget = tetheredToHome && Home != null ? Home.transform.position : transform.position;
+            ExploreTarget += new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f)) * exploreRadius;
+            ExploreTarget = new Vector3(Mathf.Max(0, Mathf.Min(ExploreTarget.x, GameManager.Main.MapBounds.x)), transform.position.y, Mathf.Max(0, Mathf.Min(ExploreTarget.z, GameManager.Main.MapBounds.z)));
+        }
+        agent.SetDestination(ExploreTarget);
+        if (WithinActivationRange())
+            StopExploring();
+    }
+
+    void StopExploring()
+    {
+        SetNewState(State.Deciding);
+    }
+
+    void StartShopping()
+    {
+        SetNewState(State.Shopping);
+    }
 
     void ShoppingLogic()
     {
         if (MoveTargetUnit == null || !MoveTargetUnit.Tags.Contains(Tag.Store))
         {
-            BasicUnit store = FindStore();
+            BasicUnit store = findStore();
             if (!store)
                 DoneShopping();
             else
@@ -315,44 +473,20 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         else
         {
             agent.stoppingDistance = 3;
-            if (Vector3.Distance(MoveTarget.transform.position, transform.position) < agent.stoppingDistance + stoppingDistanceMargin)
-            {
-                agent.stoppingDistance = 100;
+            if (WithinActivationRange())
                 BrowseWares();
-            }
         }
     }
 
     void BrowseWares()
     {
-
-        List<BasicItem> affordableItems = itemsICanAffordAtStore(MoveTargetUnit);
+        List<BasicItem> affordableItems = ItemsICanAffordAtStore(MoveTargetUnit);
         if (affordableItems.Count > 0)
             BuyItem(affordableItems[0]);
         DoneShopping();
-        /*int productCount = new List<BasicItem> (MoveTargetUnit.ProductsSold).Count; //if you put this in the for loop it fucking explodes
-		for (int product = 0; product < productCount; product++) {
-			for (int slot = 0; slot < EquipmentSlots.Count(); slot++) {
-
-				if (MoveTargetUnit.ProductsSold == null)
-					Debug.Log (MoveTarget.name + "sells no products");
-
-				BasicItem soldItem = MoveTargetUnit.ProductsSold [product];
-				if (EquipmentSlots [slot].Type == soldItem.Type) {
-					if (EquipmentSlots [slot].Instance == null || soldItem.Level > EquipmentSlots [slot].Instance.Level) {
-						if (soldItem.Cost <= Gold) {
-							BuyItem (soldItem, slot);
-							DoneShopping ();
-							return;
-						}
-					}
-				}
-			}
-		}*/
-
     }
 
-    List<BasicItem> itemsICanAffordAtStore(BasicUnit store)
+    List<BasicItem> ItemsICanAffordAtStore(BasicUnit store)
     {
         List<BasicItem> desiredItems = new List<BasicItem>(); 
         int productCount = new List<BasicItem>(store.ProductsSold).Count; //if you put this in the for loop it fucking explodes
@@ -377,7 +511,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 	void BuyItem(BasicItem soldItem)
 	{
 		Gold -= soldItem.Cost;
-		MoveTargetUnit.GainGold(soldItem.Cost);
+		MoveTargetUnit.GainGold(soldItem.Cost, false);
         for (int i = 0; i < EquipmentSlots.Count(); i++)
         {
             if (EquipmentSlots[i].Type == soldItem.Type)
@@ -392,50 +526,27 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         }
 	}
 
-    void DoneShopping()
-    {
-        setNewState(State.Deciding);
-    }
-
-    BasicUnit FindStore()
+    BasicUnit findStore()
     {
         List<BasicUnit> initialTargets = GetUnitsWithinRange(storeSearchRadius);
         List<BasicUnit> acceptableTargets = new List<BasicUnit>();
         foreach (BasicUnit encounteredUnit in initialTargets)
-        {
-            if (encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team && itemsICanAffordAtStore(encounteredUnit).Count>0)
+            if (encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team && ItemsICanAffordAtStore(encounteredUnit).Count > 0)
                 acceptableTargets.Add(encounteredUnit);
-        }
 
         if (acceptableTargets.Count > 0)
-        {
             return acceptableTargets[Random.Range(0, acceptableTargets.Count - 1)];
-           // MoveTarget = 
-            //if(debugMode)
-              //  Debug.Log(gameObject.name + " chooses to shop at " + MoveTarget.name);
-           // return true;
-        }
         return null;
-       // return false;
     }
-    
-    void CleanUp()
-    {
-        if (currentHealth <= 0 && currentState != State.Dead)
-            Die();
 
-        while (Spawns.Contains(null))
-            Spawns.Remove(null);
-        
-        //Move Towards Target's new position
-        if (agent != null && agent.isActiveAndEnabled)
-        {
-            if (MoveTarget != null)
-                agent.SetDestination(MoveTarget.transform.position);
-            else if (ExploreTarget == Vector3.zero)
-                agent.SetDestination(transform.position);
-        }
+    void DoneShopping()
+    {
+        SetNewState(State.Deciding);
     }
+
+    
+    
+    
 
     void UpdateSpawning()
     {
@@ -450,7 +561,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     }
     
 
-    int teamGold()
+    int TeamGold()
     {
         if (team != null)
             return team.Gold;
@@ -460,7 +571,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     public bool CanSpawn()
     {
-        return (SpawnType != null && SpawnType.GetComponent<BasicUnit>().GoldCost <= teamGold() && Spawns.Count < MaxSpawns);
+        return (SpawnType != null && SpawnType.GetComponent<BasicUnit>().GoldCost <= TeamGold() && Spawns.Count < MaxSpawns);
     }
 
     public BasicUnit Spawn(GameObject template, Vector3 position)
@@ -472,7 +583,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         BasicUnit spawnedUnit = spawnedObject.GetComponent<BasicUnit>();
         spawnedUnit.myTemplate = template;
         spawnedUnit.Home = gameObject;
-        spawnedUnit.spawnedByStructure = true;
+        //spawnedUnit.spawnedByStructure = true;
         spawnedUnit.parentObjectName = template.gameObject.name;
         spawnedUnit.team = team;
         spawnedObject.name = template.name;
@@ -483,9 +594,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     }
 
 
-    void StartHunting()
+    void StartHunting(BasicUnit optionalTarget = null)
     {
-        setNewState(State.Hunting);
+        SetNewState(State.Hunting);
+        if(optionalTarget!=null)
+            MoveTarget = optionalTarget.gameObject;
     }
 
     void HuntingLogic()
@@ -501,7 +614,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         {
             List<BasicUnit> acceptableTargets = chooseAbilityAndFindPossibleTargets();
 
-            acceptableTargets = SortByDistance(acceptableTargets);
+            acceptableTargets = sortByDistance(acceptableTargets);
 
             if (acceptableTargets.Count != 0)
                 MoveTarget = acceptableTargets[0].gameObject; //Random.Range(0, acceptableTargets.Count) //pick closest target
@@ -520,10 +633,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     void StopHunting()
     {
         InterruptAbility ();
-        setNewState(State.Deciding);
+        SetNewState(State.Deciding);
 	}
 
-    List<BasicUnit> SortByDistance(List<BasicUnit> PotentialTargets)
+    List<BasicUnit> sortByDistance(List<BasicUnit> PotentialTargets)
     {
         return PotentialTargets.OrderBy(o => Vector3.Distance(o.transform.position,transform.position)).ToList();
     }
@@ -606,6 +719,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     {
         animator.SetBool("Firing", false);
         if (currentAbility != null && !currentAbility.finished) {
+            if(debugMode)
 			Debug.Log ("Ability Interrupted");
 			currentAbility.FinishAbility();
 		}
@@ -639,13 +753,24 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     public void TakeDamage(float damage, BasicUnit source)
     {
-        if(debugMode)
-		Debug.Log (gameObject.name + " is taking " + damage + " damage from " + source.gameObject.name);
-        currentHealth -= Mathf.Max(0,damage);
-        if (currentState != State.Hunting)
-            DecideLogic();
-        else if (currentHealth / getMaxHP < .15f)
-            DecideLogic();
+        timeSinceLastDamage = 0;
+        if (debugMode)
+            Debug.Log(gameObject.name + " is taking " + damage + " damage from " + source.gameObject.name);
+
+        currentHealth -= Mathf.Max(0, damage);
+
+        if (passiveStates.Contains(currentState))
+            StartDeciding();
+        else if (currentState == State.Hunting)
+        {
+            if (currentHealth / getMaxHP < fleeHealthPercentage)
+                StartDeciding();
+            else if (MoveTarget != null && MoveTargetUnit.Tags.Contains(Tag.Structure))
+                StartHunting(source);
+        }
+
+
+        BroadcastCryForHelp(source);
     }
 
     public void TakeHealing(float damage, BasicUnit source)
@@ -656,7 +781,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void Die()
     {
-        setNewState(State.Dead);
+        SetNewState(State.Dead);
         if (agent != null)
         {
             agent.speed = 0;
@@ -705,13 +830,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         {
             if (i == goldRecipients.Count - 1)
             {
-                goldRecipients[i].GainGold(Gold);
+                goldRecipients[i].GainGold(Gold, true);
                 Gold = 0;
             }
             else
             {
                 int goldGranted = initialGold / goldRecipients.Count;
-                goldRecipients[i].GainGold(goldGranted);
+                goldRecipients[i].GainGold(goldGranted,true);
                 Gold -= goldGranted;
             }
         }
@@ -733,14 +858,23 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         return currentHealth >= getMaxHP;
     }
 
-    void GainGold(int goldAmount)
+    void GainGold(int goldAmount, bool taxableIncome)
     {
-        Gold += goldAmount; //add visual and sound effects
-        if(Tags.Contains(Tag.Store) && team != null)
+        //add visual and sound effects
+        if (Tags.Contains(Tag.Store) && team != null)
         {
+            Gold += goldAmount;
             team.Gold += Gold;
             Gold = 0;
         }
+        else if (taxableIncome)
+        {
+            int taxes = Mathf.RoundToInt(guildTaxRate * (float)goldAmount);
+            guildDues += taxes;
+            Gold += goldAmount - taxes;
+        }
+        else
+            Gold += goldAmount;
     }
 
     void GainXP(float xpAmount)
@@ -755,8 +889,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
 	void LevelUp() //add visual and sound effects
     {
-        Level++; 
-        Debug.Log(gameObject.name + " leveled up to " + Level + "!");
+        Level++;
+        if(debugMode)
+            Debug.Log(gameObject.name + " leveled up to " + Level + "!");
         gameObject.name = (parentObjectName.Length ==0 ? gameObject.name : parentObjectName) + " " + Level;
 
 		baseStats[Stat.Strength] += levelUpStrength;
@@ -775,16 +910,22 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             if (unit.team == team)
                 unit.HearCryForHelp(this, attacker);
         }
+
+        foreach(GameObject unitObject in Spawns)
+        {
+            BasicUnit unit = unitObject.GetComponent<BasicUnit>();
+            if (unit.team == team)
+                unit.HearCryForHelp(this, attacker);
+        }
     }
 
     public void HearCryForHelp(BasicUnit unitInDistress, BasicUnit attacker)
     {
         if(!Tags.Contains(Tag.Structure))
         {
-            if(currentState == State.Exploring)
+            if (passiveStates.Contains(currentState) && Random.Range(0f, 1f) < respondToCryForHelpChance && !attacker.Tags.Contains(Tag.Dead))
             {
-                StopExploring();
-                StartHunting();
+                StartHunting(attacker);
             }
         }
     }
@@ -801,29 +942,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         }
         return unitList;
     }
-
-   /* List<BasicItem> CheckStoreForDesireableItems(BasicUnit store)
-    {
-        List<BasicItem> DesireableItems = new List<BasicItem>();
-        int productCount = new List<BasicItem>(store.ProductsSold).Count; //if you put this in the for loop it fucking explodes
-        for (int product = 0; product < productCount; product++)
-        {
-            for (int slot = 0; slot < EquipmentSlots.Count(); slot++)
-            {
-                BasicItem soldItem = store.ProductsSold[product];
-                if (EquipmentSlots[slot].Type == soldItem.Type)
-                {
-                    if (EquipmentSlots[slot].Instance == null || soldItem.Level > EquipmentSlots[slot].Instance.Level)
-                    {
-                        DesireableItems.Add(EquipmentSlots[slot].Instance);
-                    }
-                }
-            }
-        }
-        return DesireableItems;
-    }*/
-    
-
 
     //UI Considerations
     public void OnPointerClick(PointerEventData eventData)

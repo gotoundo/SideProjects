@@ -26,7 +26,7 @@ public class Team : MonoBehaviour {
     {
         return Gold >= Structure.GoldCost;
     }
-
+    
     public void EnterPlaceStructureMode(BasicUnit StructureTemplate)
     {
         GameManager.Main.StartStructurePlacement(StructureTemplate);
@@ -42,8 +42,27 @@ public class Team : MonoBehaviour {
             ModifyMaxBuildableUnits(StructureTemplate, StructureTemplate.MaxSpawns);
         }
     }
-    
-    
+
+    public bool CanAffordBounty()
+    {
+        return Gold >= GameManager.defaultBountyIncrement;
+    }
+
+    public void EnterPlaceExploreBountyMode(BasicBounty BountyTemplate)
+    {
+        GameManager.Main.StartBountyPlacement(BountyTemplate);
+    }
+
+    public void PlaceExploreBounty(BasicBounty BountyTemplate, Vector3 position)
+    {
+        if (CanAffordBounty())
+        {
+            GameObject NewBounty= (GameObject)Instantiate(BountyTemplate.gameObject, position, BountyTemplate.transform.rotation);
+            NewBounty.GetComponent<BasicBounty>().initializeExploreBounty(GameManager.defaultBountyIncrement, position);
+        }
+    }
+
+
 
     public void ModifyMaxBuildableUnits(BasicUnit UnitTemplate, int amountDifference)
     {

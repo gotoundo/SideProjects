@@ -10,6 +10,7 @@ public class BasicAbility : MonoBehaviour {
 	public List<BasicUnit.Tag> validTargetTags;
 	public List<BasicUnit.Tag> requiredTargetTags;
 	public List<BasicUnit.Tag> excludedTargetTags;
+    public List<BasicBuff> immediateBuffsPlaced;
 	public List<BasicBuff> initialBuffsPlaced;
 	public Shape shape;
 	public float range;
@@ -128,7 +129,20 @@ public class BasicAbility : MonoBehaviour {
 		remainingCastTime = castTime;
         targets = new List<BasicUnit>();
 		targets.Add (target);
-	}
+
+        foreach (BasicUnit targetUnit in targets)
+        {
+            foreach (BasicBuff buff in immediateBuffsPlaced)
+            {
+                if (targetUnit != null)
+                {
+                    BasicBuff newBuff = Instantiate(buff).GetComponent<BasicBuff>();
+                    newBuff.Setup(Source, targetUnit);
+                    newBuff.gameObject.transform.SetParent(targetUnit.gameObject.transform);
+                }
+            }
+        }
+    }
 
 	void CastingLogic()
 	{

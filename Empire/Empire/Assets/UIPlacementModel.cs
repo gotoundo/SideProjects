@@ -3,7 +3,11 @@ using System.Collections.Generic;
 
 public class UIPlacementModel : MonoBehaviour {
 
+    public enum PlacementMode { Structure, ExploreBounty};
+
+    public PlacementMode currentMode;
     BasicUnit unitTemplate;
+    BasicBounty bountyTemplate;
     public List<Collider> collisions;
 
     //MeshFilter meshFilter;
@@ -14,13 +18,27 @@ public class UIPlacementModel : MonoBehaviour {
         get { return collisions.Count > 0; }
     }
 
-    public void SetTemplate(BasicUnit unitTemplate)
+    public void SetStructureTemplate(BasicUnit unitTemplate)
+    {
+        currentMode = PlacementMode.Structure;
+        this.unitTemplate = unitTemplate;
+        assumeDimentions(unitTemplate.gameObject);
+
+    }
+
+    public void SetBountyTemplate(BasicBounty bountyTemplate)
+    {
+        currentMode = PlacementMode.ExploreBounty;
+        this.bountyTemplate = bountyTemplate;
+        assumeDimentions(bountyTemplate.gameObject);
+    }
+
+    void assumeDimentions(GameObject template)
     {
         collisions = new List<Collider>();
-        this.unitTemplate = unitTemplate;
-        transform.localScale = unitTemplate.gameObject.transform.localScale;
-
-        GetComponent<MeshFilter>().mesh = unitTemplate.gameObject.GetComponent<MeshFilter>().sharedMesh;
+        transform.localScale = template.transform.localScale;
+        transform.rotation = template.transform.rotation;
+        GetComponent<MeshFilter>().mesh = template.GetComponent<MeshFilter>().sharedMesh;
         assignColor();
     }
 

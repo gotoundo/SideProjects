@@ -13,11 +13,13 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile></CompilerResponseFile>
+    <CompilerResponseFile>
+    </CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows:5</UnityBuildTarget>
     <UnityVersion>5.2.1f1</UnityVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -69,6 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\BasicAbility.cs" />
+    <Compile Include="Assets\BasicBounty.cs" />
     <Compile Include="Assets\BasicBuff.cs" />
     <Compile Include="Assets\BasicItem.cs" />
     <Compile Include="Assets\BasicMotivations.cs" />
@@ -84,10 +87,13 @@
     <Compile Include="Assets\UIBuyStructure.cs" />
     <Compile Include="Assets\UIDeselectionObject.cs" />
     <Compile Include="Assets\UIInspectorPanel.cs" />
+    <Compile Include="Assets\UIBuyBounty.cs" />
     <Compile Include="Assets\UIPlacementModel.cs" />
     <Compile Include="Assets\UIPlayerInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Prefabs\Buildings\Models\BuildingsPack1_shader.shader" />
+    <None Include="Assets\Prefabs\Buildings\Models\DefenseTurret\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
