@@ -124,13 +124,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     float huntSearchRadius = 20f;
     float storeSearchRadius = 1000f;
     float deathGiftRadius = 20f;
-    float cryForHelpRadius = 10f;
+    public float cryForHelpRadius = 10f;
 	public float exploreRadius = 50f;
 	public bool tetheredToHome = false;
         
     //Spawning
     public bool autoSpawningEnabled = false;
-    public int spawnGoldCost;
+   // public int spawnGoldCost;
     public GameObject SpawnType;
     public int MaxSpawns = 0;
     public float SpawnCooldown = 3;
@@ -241,6 +241,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void ExploreLogic()
     {
+        agent.stoppingDistance = 2;
         if (ExploreTarget == Vector3.zero) {
 			ExploreTarget = tetheredToHome && Home!=null? Home.transform.position: transform.position;
 			ExploreTarget += new Vector3(Random.Range(-1f,1f),0,Random.Range(-1f,1f)) * exploreRadius;
@@ -284,7 +285,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         float RandomSelection = Random.Range(0, 100);
         if (RandomSelection < 70)
 			StartHunting ();
-		else if (RandomSelection < 80)
+		else if (RandomSelection < 85 && FindStore())
 			StartShopping ();
 		else
 			StartExploring ();
@@ -303,11 +304,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void ShoppingLogic()
     {
-
         if (MoveTargetUnit == null || !MoveTargetUnit.Tags.Contains(Tag.Store))
         {
-            if (!FindStore())
+            BasicUnit store = FindStore();
+            if (!store)
                 DoneShopping();
+            else
+                MoveTarget = store.gameObject;
         }
         else
         {
@@ -322,8 +325,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void BrowseWares()
     {
-		int amount = new List<BasicItem> (MoveTargetUnit.ProductsSold).Count; //if you put this in the for loop it fucking explodes
-		for (int product = 0; product < amount; product++) {
+
+        List<BasicItem> affordableItems = itemsICanAffordAtStore(MoveTargetUnit);
+        if (affordableItems.Count > 0)
+            BuyItem(affordableItems[0]);
+        DoneShopping();
+        /*int productCount = new List<BasicItem> (MoveTargetUnit.ProductsSold).Count; //if you put this in the for loop it fucking explodes
+		for (int product = 0; product < productCount; product++) {
 			for (int slot = 0; slot < EquipmentSlots.Count(); slot++) {
 
 				if (MoveTargetUnit.ProductsSold == null)
@@ -340,44 +348,75 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 					}
 				}
 			}
-		}
-		DoneShopping ();
-	}
+		}*/
 
-	void BuyItem(BasicItem soldItem, int slot)
+    }
+
+    List<BasicItem> itemsICanAffordAtStore(BasicUnit store)
+    {
+        List<BasicItem> desiredItems = new List<BasicItem>(); 
+        int productCount = new List<BasicItem>(store.ProductsSold).Count; //if you put this in the for loop it fucking explodes
+        for (int product = 0; product < productCount; product++)
+        {
+            for (int slot = 0; slot < EquipmentSlots.Count(); slot++)
+            {
+                BasicItem soldItem = store.ProductsSold[product];
+                if (EquipmentSlots[slot].Type == soldItem.Type)
+                {
+                    if (EquipmentSlots[slot].Instance == null || soldItem.Level > EquipmentSlots[slot].Instance.Level)
+                    {
+                        if (soldItem.Cost <= Gold)
+                            desiredItems.Add(soldItem);
+                    }
+                }
+            }
+        }
+        return desiredItems;
+    }
+
+	void BuyItem(BasicItem soldItem)
 	{
 		Gold -= soldItem.Cost;
 		MoveTargetUnit.GainGold(soldItem.Cost);
-		EquipmentSlots[slot].Instance = Instantiate(soldItem.gameObject).GetComponent<BasicItem>();
-		if(debugMode)
-            Debug.Log(gameObject.name + " bought " + EquipmentSlots[slot].Instance.name + " from " + MoveTarget + ".");
+        for (int i = 0; i < EquipmentSlots.Count(); i++)
+        {
+            if (EquipmentSlots[i].Type == soldItem.Type)
+            {
+                EquipmentSlots[i].Instance = Instantiate(soldItem.gameObject).GetComponent<BasicItem>();
+                EquipmentSlots[i].Instance.gameObject.transform.SetParent(transform);
+                EquipmentSlots[i].Instance.gameObject.transform.localPosition = Vector3.zero;
+                if (debugMode)
+                    Debug.Log(gameObject.name + " bought " + EquipmentSlots[i].Instance.name + " from " + MoveTarget + ".");
+                break;
+            }
+        }
 	}
 
     void DoneShopping()
     {
-        MoveTarget = null;
-        currentState = State.Deciding;
+        setNewState(State.Deciding);
     }
 
-    bool FindStore()
+    BasicUnit FindStore()
     {
         List<BasicUnit> initialTargets = GetUnitsWithinRange(storeSearchRadius);
         List<BasicUnit> acceptableTargets = new List<BasicUnit>();
         foreach (BasicUnit encounteredUnit in initialTargets)
         {
-            if (encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team && CheckStoreForDesireableItems(encounteredUnit).Count>0)
+            if (encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team && itemsICanAffordAtStore(encounteredUnit).Count>0)
                 acceptableTargets.Add(encounteredUnit);
         }
 
         if (acceptableTargets.Count > 0)
         {
-            MoveTarget = acceptableTargets[Random.Range(0, acceptableTargets.Count - 1)].gameObject;
-            if(debugMode)
-                Debug.Log(gameObject.name + " chooses to shop at " + MoveTarget.name);
-            return true;
+            return acceptableTargets[Random.Range(0, acceptableTargets.Count - 1)];
+           // MoveTarget = 
+            //if(debugMode)
+              //  Debug.Log(gameObject.name + " chooses to shop at " + MoveTarget.name);
+           // return true;
         }
-
-        return false;
+        return null;
+       // return false;
     }
     
     void CleanUp()
@@ -409,10 +448,19 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             Spawn(SpawnType,transform.position);
         }
     }
+    
+
+    int teamGold()
+    {
+        if (team != null)
+            return team.Gold;
+        else
+            return 0;
+    }
 
     public bool CanSpawn()
     {
-        return (spawnGoldCost <= Gold);
+        return (SpawnType != null && SpawnType.GetComponent<BasicUnit>().GoldCost <= teamGold() && Spawns.Count < MaxSpawns);
     }
 
     public BasicUnit Spawn(GameObject template, Vector3 position)
@@ -428,6 +476,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         spawnedUnit.parentObjectName = template.gameObject.name;
         spawnedUnit.team = team;
         spawnedObject.name = template.name;
+        if(team!=null)
+            team.Gold -= spawnedUnit.GoldCost;
 
         return spawnedUnit;
     }
@@ -523,10 +573,12 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		}
 
 		if (currentAbility.isWithinRange (initialAbilityTarget)) {
-			//Debug.Log ("In range of ability!");
-			if (currentAbility.CanCast() && !currentAbility.running) {
-                
-				currentAbility.StartCasting (initialAbilityTarget);
+            RotateTowards(initialAbilityTarget.gameObject.transform);
+            //Debug.Log ("In range of ability!");
+            if (currentAbility.CanCast() && !currentAbility.running) {
+               // agentRotateTowards(target);
+
+                currentAbility.StartCasting (initialAbilityTarget);
                 //agent.stop
                 
                 //agent.SetDestination(transform.position);
@@ -536,13 +588,19 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
         animator.SetBool("Firing",  true);//!currentAbility.finished
 
+
         if (currentAbility.finished) {
 
 			return; //end of ability use decision logic - might not actually need anything here
 		}
     }
 
-
+    private void RotateTowards(Transform target)
+    {
+        Vector3 direction = (target.position - transform.position).normalized;
+        Quaternion lookRotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * agent.angularSpeed);
+    }
 
     void InterruptAbility()
     {
@@ -744,7 +802,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         return unitList;
     }
 
-    List<BasicItem> CheckStoreForDesireableItems(BasicUnit store)
+   /* List<BasicItem> CheckStoreForDesireableItems(BasicUnit store)
     {
         List<BasicItem> DesireableItems = new List<BasicItem>();
         int productCount = new List<BasicItem>(store.ProductsSold).Count; //if you put this in the for loop it fucking explodes
@@ -763,7 +821,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             }
         }
         return DesireableItems;
-    }
+    }*/
     
 
 

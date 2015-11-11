@@ -79,6 +79,7 @@
     <Compile Include="Assets\PinchZoom.cs" />
     <Compile Include="Assets\Team.cs" />
     <Compile Include="Assets\TraitModifier.cs" />
+    <Compile Include="Assets\UIBuildUnit.cs" />
     <Compile Include="Assets\UIBuildingsPanel.cs" />
     <Compile Include="Assets\UIBuyStructure.cs" />
     <Compile Include="Assets\UIDeselectionObject.cs" />
