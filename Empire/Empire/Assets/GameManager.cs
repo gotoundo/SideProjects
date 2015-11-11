@@ -29,7 +29,7 @@ public class GameManager : MonoBehaviour {
     {
         Main = this;
         AllTeams = new List<Team>();
-        MapBounds = new Vector3(100, 0, 100);
+        MapBounds = new Vector3(200, 0, 200);
     }
 
 	// Use this for initialization

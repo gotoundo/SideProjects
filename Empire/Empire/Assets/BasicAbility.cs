@@ -126,6 +126,7 @@ public class BasicAbility : MonoBehaviour {
 		casting = true;
 		channeling = false;
 		remainingCastTime = castTime;
+        targets = new List<BasicUnit>();
 		targets.Add (target);
 	}
 
