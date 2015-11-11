@@ -81,10 +81,16 @@ public class BasicAbility : MonoBehaviour {
             existingSummonedUnits.Remove(null);
 
 		if (!running) {
-			//Debug.Log("Cooling down...");
 			remainingCooldown = Tools.DecrementTimer (remainingCooldown);
 		}
 		else {
+
+            if(initialTarget == null)
+            {
+                FinishAbility();
+                return;
+            }
+
 			if(casting)
 				CastingLogic();
 			else if(channeling)

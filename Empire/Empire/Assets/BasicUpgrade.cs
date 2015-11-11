@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-
 //technologies
 public class BasicUpgrade : MonoBehaviour {
 
