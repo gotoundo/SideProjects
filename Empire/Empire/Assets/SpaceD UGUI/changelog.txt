@@ -1,0 +1,30 @@
+Version 1.4:
+- Updated vertex modifing scripts (Unity 5.2 changes).
+- Improved UIDragObject, now handles canvas scaling and all canvas render modes.
+
+Version 1.3:
+- Fixed WP8 compile error (note that the internal bug is fixed in Unity Patch 5.0.1p1).
+- Added a tool to disable all the navigations with a single click.
+- Disabled all the navigations to prevent highlight getting stuck.
+- Added missing navigation property to the UITab editor script.
+
+Version 1.2:
+- Fixed highlight transition editor script.
+- Improved UIDragObject inertia dampening.
+- Added constrain within canvas option to the UIDragObject script.
+- Fixed SelectField Label editor script.
+- Fixed the Circular and Rectangular Raycast filters editor scripts not including the canvas scaling factor.
+- Improved the UISelectField script.
+- Fixed AOT cross compile error.
+
+Version 1.1:
+- Fixed Select Field not getting deselected when selecting an option.
+- Fixed few Select Field initialization problems.
+- Select Field will no longer construct the list when changing properties in edit mode (it was not intended).
+- The ColorBlockExtended default color multiplier value is now set to 1.
+- Fixed UITab initialization problems.
+- UIRectangularRaycastFilter now supports borders.
+- Added UIHighlightTransition script.
+
+Version 1.0:
+- Initial release

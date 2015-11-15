@@ -14,7 +14,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 	public enum Stat{ Strength, Dexterity, Intelligence, Special}
 	public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxMana, ManaRegen }
 
-    List<State> passiveStates = new List<State>( new State[] { State.Exploring, State.ExploreBounty, State.Shopping, State.Sleeping }); // these can be interrupted
+    List<State> passiveStates = new List<State>( new State[] { State.Exploring, State.ExploreBounty, State.Shopping, State.Sleeping, State.GoingHome }); // these can be interrupted
 
 
     //Attributes and Stats
@@ -48,7 +48,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		baseAttributes.Add (Attribute.None, 0);
 		baseAttributes.Add (Attribute.PhysicalDamage, 0);
 	}
-	public float GetStat(Stat stat) //stat mods are added or subtracted
+	public int GetStat(Stat stat) //stat mods are added or subtracted
 	{
 		float baseStat = baseStats [stat];
 
@@ -61,7 +61,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 						baseStat += item.StatEffects[j].value;
 			}
 		}
-		return baseStat;
+		return Mathf.RoundToInt(baseStat);
 	}
 	public float GetAttribute(Attribute attribute) //attribute modifiers are added or subtracted
     {
@@ -79,7 +79,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		return baseAttribute;
 	}
 
-	public float getMaxHP { get { return (GetStat(Stat.Strength) * 10) + GetAttribute(Attribute.MaxHealth); } }
+	public float getMaxHP { get { return Mathf.RoundToInt(GetStat(Stat.Strength) * 10f) + GetAttribute(Attribute.MaxHealth); } }
     
     //RPG Progression
     public int Gold;
@@ -99,9 +99,17 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         public BasicItem.ItemType Type;
         public BasicItem Instance;
     }
-    public EquipmentSlot[] EquipmentSlots;
-    public BasicItem[] ProductsSold; 
     
+    public List<BasicItem> ProductsSold;
+    public int HealingPotions;
+
+    //Store
+
+    public List<EquipmentSlot> EquipmentSlots;
+    public List<BasicUpgrade> AvailableUpgrades;
+    public List<BasicUpgrade.ID> ResearchedUpgrades;
+
+
     //Core Logic
     public List<Tag> Tags;
     public State currentState;
@@ -126,7 +134,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
    // bool spawnedByStructure = false;
 
     //Search Radii
-    float huntSearchRadius = 20f;
+    public float huntSearchRadius = 20f;
     float storeSearchRadius = 1000f;
     float deathGiftRadius = 20f;
     public float cryForHelpRadius = 10f;
@@ -146,14 +154,20 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public float remainingCorpseDuration;
     public float remainingDecideTime; //not implemented yet
     public float timeSinceLastDamage;
+    public float remainingShoppingTime;
+
 
     //Other constants
-    const float stoppingDistanceMargin = 4;
+    const float stoppingDistanceMargin = 2;
     const float sleepRegeneratePercentage = .02f;
     const float fleeHealthPercentage = 0.33f;
     const float goHomeHealthPercentage = 0.8f;
     const float respondToCryForHelpChance = 0.5f;
     const float guildTaxRate = 0.3f;
+    const float decideTime = 1f;
+    const float shoppingTime = 2f;
+    const float healingPotionPower = 50f;
+    const int maxHealingPotions = 5;
     
     // Use this for initialization
     void Start () {
@@ -169,12 +183,24 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		initializeStatsAndAttributes ();
 		currentHealth = getMaxHP;
 
-		for (int i = 0; i<Abilities.Count; i++) {
-			{
-				Abilities[i] = Instantiate(Abilities[i]).GetComponent<BasicAbility>();
-				Abilities[i].gameObject.transform.SetParent(transform);
-			}
-		}
+        for (int i = 0; i < Abilities.Count; i++)
+        {
+            {
+                Abilities[i] = Instantiate(Abilities[i]).GetComponent<BasicAbility>();
+                Abilities[i].gameObject.transform.SetParent(transform);
+            }
+        }
+        for (int i = 0; i < AvailableUpgrades.Count; i++)
+        {
+            {
+                AvailableUpgrades[i] = Instantiate(AvailableUpgrades[i]).GetComponent<BasicUpgrade>();
+                AvailableUpgrades[i].researcher = this;
+                AvailableUpgrades[i].gameObject.transform.SetParent(transform);
+            }
+        }
+
+
+
 
         XP = Mathf.Pow(Level,2);
 
@@ -257,7 +283,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     bool WithinActivationRange()
     {
-        if (ExploreTarget != Vector3.zero && currentState == State.Exploring)
+        if (currentState == State.Exploring)
             return Vector3.Distance(transform.position, ExploreTarget) < agent.stoppingDistance + stoppingDistanceMargin;
         return Vector3.Distance(transform.position, MoveTarget.transform.position) < agent.stoppingDistance + stoppingDistanceMargin;
     }
@@ -270,20 +296,88 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         while (Spawns.Contains(null))
             Spawns.Remove(null);
 
+        
         //Move Towards Target's new position
         if (agent != null && agent.isActiveAndEnabled)
         {
+            
+            
+            //if (currentState == State.Hunting && currentAbility != null && currentAbility.casting && WithinActivationRange())
+               // agent.Stop();
+
             if (MoveTarget != null)
                 agent.SetDestination(MoveTarget.transform.position);
             else if (ExploreTarget == Vector3.zero)
                 agent.SetDestination(transform.position);
+
         }
     }
 
+    //DECIDING - CENTRAL LOGICAL NEXUS
+    void StartDeciding()
+    {
+        agent.Stop();
+        if (Tags.Contains(Tag.Structure))
+        {
+            SetNewState(State.Structure);
+            return;
+        }
+        SetNewState(State.Deciding);
+        remainingDecideTime = decideTime;
+    }
+
+    void DecideLogic()
+    {
+        if (Tags.Contains(Tag.Dead))
+        {
+            Die();
+            return;
+        }
+
+        if (Tags.Contains(Tag.Structure))
+        {
+            SetNewState(State.Structure);
+            return;
+        }
+
+        remainingDecideTime -= Time.deltaTime;
+        if (remainingDecideTime <= 0)
+        {
+            StopDeciding();
+
+            float RandomSelection = Random.Range(0, 100);
+
+            if (Home != null && currentHealth / getMaxHP < fleeHealthPercentage && !HasHealingPotions() && Tags.Contains(Tag.Hero))
+                StartFleeing();
+            else if (Home != null && RandomSelection < 10 && currentHealth / getMaxHP < goHomeHealthPercentage)
+                StartGoingHome();
+            else if (RandomSelection < 60)
+                StartHunting();
+            else if (RandomSelection < 80 && Tags.Contains(Tag.Hero) && FindStore())
+                StartShopping();
+            else if (RandomSelection < 90 && team == GameManager.Main.Player && Tags.Contains(Tag.Hero) && PickBounty())
+            {
+                if (BountyTarget.type == BasicBounty.Type.Explore)
+                    StartExploreBounty();
+                else
+                    EndBounty();
+            }
+            else
+                StartExploring();
+        }
+
+    }
+
+    void StopDeciding()
+    {
+        if(agent!=null)
+            agent.Resume();
+    }
 
 
     //GOING HOME
     void StartGoingHome() {
+        agent.stoppingDistance = 5;
         SetNewState(State.GoingHome);
     }
     void GoingHomeLogic()
@@ -337,57 +431,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         SetNewState(State.Deciding);
     }
     
-
-    void StartDeciding()
-	{
-		if(Tags.Contains(Tag.Structure))
-		{
-            SetNewState(State.Structure);
-			return;
-		}
-        SetNewState(State.Deciding);
-		remainingDecideTime = 1;
-	}
-
-    void DecideLogic()
-    {
-        if (Tags.Contains(Tag.Dead))
-        {
-            Die();
-            return;
-        }
-
-        if (Tags.Contains(Tag.Structure))
-        {
-            SetNewState(State.Structure);
-            return;
-        }
-
-        float RandomSelection = Random.Range(0, 100);
-
-        if (Home != null && currentHealth / getMaxHP < fleeHealthPercentage && !HasHealingPotions() && !Tags.Contains(Tag.Monster))
-            StartFleeing();
-        else if (Home != null && RandomSelection < 10 && currentHealth / getMaxHP < goHomeHealthPercentage)
-            StartGoingHome();
-        else if (RandomSelection < 40)
-            StartHunting();
-        else if (RandomSelection < 60 && findStore())
-            StartShopping();
-        else if (RandomSelection < 80 && PickBounty() && team == GameManager.Main.Player)
-        {
-            if (BountyTarget.type == BasicBounty.Type.Explore)
-                StartExploreBounty();
-            else
-                EndBounty();
-        }
-        else
-            StartExploring();
-
-    }
+   
 
     bool HasHealingPotions()
     {
-        return false;
+        return HealingPotions > 0;
     }
 
     bool PickBounty()
@@ -439,15 +487,34 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     void ExploreLogic()
     {
         agent.stoppingDistance = 2;
-        if (ExploreTarget == Vector3.zero)
+
+        if(!agent.pathPending)
         {
-            ExploreTarget = tetheredToHome && Home != null ? Home.transform.position : transform.position;
-            ExploreTarget += new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f)) * exploreRadius;
-            ExploreTarget = new Vector3(Mathf.Max(0, Mathf.Min(ExploreTarget.x, GameManager.Main.MapBounds.x)), transform.position.y, Mathf.Max(0, Mathf.Min(ExploreTarget.z, GameManager.Main.MapBounds.z)));
+            if(ExploreTarget == Vector3.zero || !agent.hasPath)
+            {
+                RandomNavmeshPoint(transform.position, exploreRadius, out ExploreTarget);
+                agent.SetDestination(ExploreTarget);
+            }
+            else if (WithinActivationRange())
+                StopExploring();
         }
-        agent.SetDestination(ExploreTarget);
-        if (WithinActivationRange())
-            StopExploring();
+
+    }
+
+    bool RandomNavmeshPoint(Vector3 center, float range, out Vector3 result)
+    {
+        for (int i = 0; i < 30; i++)
+        {
+            Vector3 randomPoint = center + Random.insideUnitSphere * range;
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(randomPoint, out hit, 1.0f, NavMesh.AllAreas))
+            {
+                result = hit.position;
+                return true;
+            }
+        }
+        result = Vector3.zero;
+        return false;
     }
 
     void StopExploring()
@@ -464,11 +531,14 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     {
         if (MoveTargetUnit == null || !MoveTargetUnit.Tags.Contains(Tag.Store))
         {
-            BasicUnit store = findStore();
+            BasicUnit store = FindStore();
             if (!store)
                 DoneShopping();
             else
+            {
                 MoveTarget = store.gameObject;
+                remainingShoppingTime = shoppingTime;
+            }
         }
         else
         {
@@ -480,10 +550,14 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void BrowseWares()
     {
-        List<BasicItem> affordableItems = ItemsICanAffordAtStore(MoveTargetUnit);
-        if (affordableItems.Count > 0)
-            BuyItem(affordableItems[0]);
-        DoneShopping();
+        remainingShoppingTime -= Time.deltaTime;
+        if (remainingShoppingTime <= 0)
+        {
+            List<BasicItem> affordableItems = ItemsICanAffordAtStore(MoveTargetUnit);
+            if (affordableItems.Count > 0)
+                BuyItem(affordableItems[0]);
+            DoneShopping();
+        }
     }
 
     List<BasicItem> ItemsICanAffordAtStore(BasicUnit store)
@@ -526,7 +600,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         }
 	}
 
-    BasicUnit findStore()
+    BasicUnit FindStore()
     {
         List<BasicUnit> initialTargets = GetUnitsWithinRange(storeSearchRadius);
         List<BasicUnit> acceptableTargets = new List<BasicUnit>();
@@ -545,9 +619,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     }
 
     
-    
-    
-
     void UpdateSpawning()
     {
         if (!autoSpawningEnabled || Spawns.Count >= MaxSpawns)
@@ -668,13 +739,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     {
         agent.SetDestination(MoveTarget.transform.position);
 
-        if (Abilities.Count == 0) {
-            if (debugMode)
-                Debug.Log("Stopping Hunting because I have no abilities");
-            StopHunting ();
-			return;
-		}
-
         BasicUnit initialAbilityTarget = MoveTargetUnit;
 		if (currentAbility == null)
 			PickAbility();
@@ -689,22 +753,18 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             RotateTowards(initialAbilityTarget.gameObject.transform);
             //Debug.Log ("In range of ability!");
             if (currentAbility.CanCast() && !currentAbility.running) {
-               // agentRotateTowards(target);
 
                 currentAbility.StartCasting (initialAbilityTarget);
-                //agent.stop
-                
-                //agent.SetDestination(transform.position);
-                
+                if (agent)
+                    agent.Stop();
             }
 		}
 
-        animator.SetBool("Firing",  true);//!currentAbility.finished
-
+        animator.SetBool("Firing",  true);
 
         if (currentAbility.finished) {
-
-			return; //end of ability use decision logic - might not actually need anything here
+            if (agent)
+                agent.Resume();
 		}
     }
 
@@ -725,6 +785,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		}
 		currentAbility = null;
         MoveTarget = null;
+
+        if (agent)
+            agent.Resume();
     }
 
     List<BasicUnit> chooseAbilityAndFindPossibleTargets()
@@ -760,11 +823,17 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         currentHealth -= Mathf.Max(0, damage);
 
         if (passiveStates.Contains(currentState))
-            StartDeciding();
+        {
+            if (!Tags.Contains(Tag.Structure))
+                StartDeciding();
+        }
         else if (currentState == State.Hunting)
         {
-            if (currentHealth / getMaxHP < fleeHealthPercentage)
-                StartDeciding();
+            if (Tags.Contains(Tag.Hero) && currentHealth / getMaxHP < fleeHealthPercentage)
+            {
+                StopHunting();
+                StartFleeing();
+            }
             else if (MoveTarget != null && MoveTargetUnit.Tags.Contains(Tag.Structure))
                 StartHunting(source);
         }
@@ -921,7 +990,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     public void HearCryForHelp(BasicUnit unitInDistress, BasicUnit attacker)
     {
-        if(!Tags.Contains(Tag.Structure))
+        if (!Tags.Contains(Tag.Structure) && attacker != null && unitInDistress != null)
         {
             if (passiveStates.Contains(currentState) && Random.Range(0f, 1f) < respondToCryForHelpChance && !attacker.Tags.Contains(Tag.Dead))
             {
@@ -941,6 +1010,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                 unitList.Add(NearbyUnit);
         }
         return unitList;
+    }
+
+    //Upgrades
+
+    public void ResearchUpgrade(BasicUpgrade upgrade)
+    {
+        upgrade.StartResearch();
     }
 
     //UI Considerations

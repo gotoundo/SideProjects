@@ -13,13 +13,11 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile>
-    </CompilerResponseFile>
+    <CompilerResponseFile></CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows:5</UnityBuildTarget>
     <UnityVersion>5.2.1f1</UnityVersion>
-    <RootNamespace>
-    </RootNamespace>
+    <RootNamespace></RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -80,20 +78,68 @@
     <Compile Include="Assets\CollisionTestScript.cs" />
     <Compile Include="Assets\GameManager.cs" />
     <Compile Include="Assets\PinchZoom.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Effects\Gradient.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Effects\NicerOutline.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Enums, Structs and Serializables\AnimationTriggersExtended.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Enums, Structs and Serializables\ColorBlockExtended.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Enums, Structs and Serializables\SpriteStateExtended.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Enums, Structs and Serializables\UIWindowID.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Miscellaneous\BitMaskAttribute.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Miscellaneous\BreakPrefabConnection.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Miscellaneous\CommonColorBuffer.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Miscellaneous\LetterSpacing.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Miscellaneous\NameAppendIndex.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Miscellaneous\UITextSetValue.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Miscellaneous\UIToggleWindowAndTab.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Miscellaneous\UIUtility.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Raycast Filters\UICircularRaycastFilter.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Raycast Filters\UIIgnoreRaycast.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Raycast Filters\UIMaskRaycastFilter.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Raycast Filters\UIRectangularRaycastFilter.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Test Scripts\Test_Fill.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Tweening\ColorTween.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Tweening\FloatTween.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Tweening\ITweenValue.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Tweening\TweenEasing.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Tweening\TweenEasingHandler.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Tweening\TweenRunner.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Tweening\Vector2Tween.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Tweening\Vector3Tween.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\Select Field\UISelectField.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\Select Field\UISelectField_Arrow.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\Select Field\UISelectField_Label.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\Select Field\UISelectField_List.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\Select Field\UISelectField_Option.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIButtonExtended.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIButtonExtended_Target.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIDragObject.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIFlippable.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIHighlightTransition.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIInputFieldLayoutExtension.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIPagination.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIScrollingProxy.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UISliderExtended.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UISpriteAnimation.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UITab.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIWindow.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIWindowManager.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIWindowTitle.cs" />
     <Compile Include="Assets\Team.cs" />
     <Compile Include="Assets\TraitModifier.cs" />
     <Compile Include="Assets\UIBuildUnit.cs" />
     <Compile Include="Assets\UIBuildingsPanel.cs" />
+    <Compile Include="Assets\UIBuyBounty.cs" />
     <Compile Include="Assets\UIBuyStructure.cs" />
     <Compile Include="Assets\UIDeselectionObject.cs" />
     <Compile Include="Assets\UIInspectorPanel.cs" />
-    <Compile Include="Assets\UIBuyBounty.cs" />
     <Compile Include="Assets\UIPlacementModel.cs" />
     <Compile Include="Assets\UIPlayerInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Prefabs\Buildings\Models\BuildingsPack1_shader.shader" />
     <None Include="Assets\Prefabs\Buildings\Models\DefenseTurret\readme.txt" />
+    <None Include="Assets\SpaceD UGUI\changelog.txt" />
+    <None Include="Assets\SpaceD UGUI\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
