@@ -132,8 +132,10 @@
     <Compile Include="Assets\UIBuyStructure.cs" />
     <Compile Include="Assets\UIDeselectionObject.cs" />
     <Compile Include="Assets\UIInspectorPanel.cs" />
+    <Compile Include="Assets\UILevelUpStructure.cs" />
     <Compile Include="Assets\UIPlacementModel.cs" />
     <Compile Include="Assets\UIPlayerInfo.cs" />
+    <Compile Include="Assets\UIResearchButton.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Prefabs\Buildings\Models\BuildingsPack1_shader.shader" />

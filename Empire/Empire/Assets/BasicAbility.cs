@@ -247,4 +247,11 @@ public class BasicAbility : MonoBehaviour {
 		return Vector3.Distance(Source.gameObject.transform.position, potentialTarget.gameObject.transform.position) <= range;
 	}
 
+    void OnDestroy()
+    {
+        foreach (BasicUnit unit in existingSummonedUnits)
+            if (unit != null)
+                Destroy(unit.gameObject);
+    }
+
 }

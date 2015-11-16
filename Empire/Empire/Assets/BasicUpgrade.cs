@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 //Do not instantiate
 public class BasicUpgrade : MonoBehaviour {
-    public enum ID { Forge1,Forge2,Forge3}
+    public enum ID { ForgeWeapons1,ForgeWeapons2,ForgeWeapons3,Base1,Base2,Base3,BazaarHealingPotion}
 
     public ID id;
     public int Cost;
@@ -12,7 +12,9 @@ public class BasicUpgrade : MonoBehaviour {
     public List<ID> UpgradesRequired;
     public int RequiredBuildingLevel;
     bool Researching = false;
+    bool FinishedResearching = false;
     float remainingResearchTime;
+    public bool permanentUpgrade = false;
 
     public BasicUnit researcher;
 
@@ -28,7 +30,7 @@ public class BasicUpgrade : MonoBehaviour {
     
     public bool IsVisible()
     {
-        bool visible = RequiredBuildingLevel >= researcher.Level;
+        bool visible = RequiredBuildingLevel <= researcher.Level;
         foreach(ID requiredUpgradeID in UpgradesRequired)
         {
             if (!researcher.ResearchedUpgrades.Contains(requiredUpgradeID))
@@ -39,22 +41,28 @@ public class BasicUpgrade : MonoBehaviour {
 
     public bool CanUpgrade()
     {
-        return IsVisible() && researcher.Gold >= Cost;
+        return IsVisible() && researcher.team.Gold >= Cost && !Researching &&!FinishedResearching;
     }
 
     public void StartResearch()
     {
-        researcher.Gold -= Cost;
+        researcher.team.Gold -= Cost;
         remainingResearchTime = ResearchTime;
         Researching = true;
+        GameManager.Main.PossibleOptionsChange(researcher);
     }
 
     void EndResearch()
     {
         Researching = false;
+        FinishedResearching = true;
         researcher.AvailableUpgrades.Remove(this);
         researcher.ResearchedUpgrades.Add(id);
         researcher.ProductsSold.AddRange(ItemsUnlockedForSale);
+
+        researcher.team.TeamUpgrades.Add(id);
+
+        GameManager.Main.PossibleOptionsChange(researcher);
         Destroy(gameObject);
     }
 
@@ -62,9 +70,17 @@ public class BasicUpgrade : MonoBehaviour {
     {
         if(Researching)
         {
-            remainingResearchTime = Time.deltaTime;
+            remainingResearchTime -= Time.deltaTime;
             if(remainingResearchTime <= 0)
                 EndResearch();
         }
     }
+
+    void OnDestroy()
+    {
+        if (!permanentUpgrade)
+            GameManager.Main.Player.TeamUpgrades.Remove(id);
+    }
+
+    
 }

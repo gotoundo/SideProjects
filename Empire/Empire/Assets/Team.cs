@@ -8,18 +8,60 @@ public class Team : MonoBehaviour {
     public int Gold;
 
     public Dictionary<BasicUnit,int> MaxBuildableUnits;
-    public Dictionary<BasicUnit, int> CurrentUnits;
+    List<BasicUnit> currentUnits;
+    public List<BasicUpgrade.ID> TeamUpgrades;
 
     // Use this for initialization
-    void Start() {
+
+    public void AddUnit(BasicUnit unit)
+    {
+        currentUnits.Add(unit);
+        GameManager.Main.PossibleStructureAvailabilityChange();
+    }
+
+    public bool HasUnit(BasicUnit unit)
+    {
+        return currentUnits.Contains(unit);
+    }
+
+    public void RemoveUnit(BasicUnit unit)
+    {
+        if (currentUnits.Contains(unit))
+        {
+            currentUnits.Remove(unit);
+            GameManager.Main.PossibleStructureAvailabilityChange();
+        }
+    }
+
+    public List<BasicUnit> BuildableStructureTemplates()
+    {
+        List<BasicUnit> buildableStructures = new List<BasicUnit>();
+        foreach(BasicUnit unit in currentUnits)
+        {
+            foreach (BasicUnit newStructure in unit.StructuresUnlocked())
+            {
+                if (!buildableStructures.Contains(newStructure))
+                    buildableStructures.Add(newStructure);
+            }
+        }
+        return buildableStructures;
+    }
+    
+    void Awake()
+    {
+        currentUnits = new List<BasicUnit>();
+        TeamUpgrades = TeamUpgrades ?? new List<BasicUpgrade.ID>();
         MaxBuildableUnits = new Dictionary<BasicUnit, int>();
-        CurrentUnits = new Dictionary<BasicUnit, int>();
+    }
+
+    void Start() {    
         GameManager.Main.AllTeams.Add(this);
 	}
 	
 	// Update is called once per frame
 	void Update () {
-	
+        while (currentUnits.Contains(null))
+            currentUnits.Remove(null);
 	}
 
     public bool CanAffordStructure(BasicUnit Structure)
@@ -39,7 +81,7 @@ public class Team : MonoBehaviour {
             GameObject NewStucture = (GameObject)Instantiate(StructureTemplate.gameObject, position, StructureTemplate.transform.rotation);
             NewStucture.GetComponent<BasicUnit>().team = this;
             Gold -= StructureTemplate.GoldCost;
-            ModifyMaxBuildableUnits(StructureTemplate, StructureTemplate.MaxSpawns);
+            //ModifyMaxBuildableUnits(StructureTemplate, StructureTemplate.MaxSpawns);
         }
     }
 
@@ -64,18 +106,18 @@ public class Team : MonoBehaviour {
 
 
 
-    public void ModifyMaxBuildableUnits(BasicUnit UnitTemplate, int amountDifference)
+   /* public void ModifyMaxBuildableUnits(BasicUnit UnitTemplate, int amountDifference)
     {
         if (!MaxBuildableUnits.ContainsKey(UnitTemplate))
             MaxBuildableUnits.Add(UnitTemplate, 0);
         MaxBuildableUnits[UnitTemplate] += amountDifference;
     }
-    public void ModifyCurrentUnits(BasicUnit UnitTemplate, int amountDifference)
+
+    public void ModifyCurrentUnits(BasicUnit Unit)
     {
-        if (!CurrentUnits.ContainsKey(UnitTemplate))
-            CurrentUnits.Add(UnitTemplate, 0);
-        CurrentUnits[UnitTemplate] += amountDifference;
-    }
+        if (!CurrentUnits.Contains(Unit))
+            CurrentUnits.Add(Unit);
+    }*/
 
 
 }

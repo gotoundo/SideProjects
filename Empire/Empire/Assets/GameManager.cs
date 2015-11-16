@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviour {
     private GameObject PlacementTemplate;
     public GameObject InspectorPanel;
     public BasicUnit InspectedUnit;
+    public GameObject BuildingsPanel;
 
     public Vector3 MapBounds;
 
@@ -126,6 +127,11 @@ public class GameManager : MonoBehaviour {
     }
 
 
+    public void PossibleStructureAvailabilityChange()
+    {
+        BuildingsPanel.GetComponent<UIBuildingsPanel>().UpdateButtons();
+    }
+
     // INSPECTOR WINDOW LOGIC
 
     public void StartInspection(BasicUnit unitToInspect)
@@ -133,6 +139,12 @@ public class GameManager : MonoBehaviour {
         InspectorPanel.SetActive(true);
         InspectedUnit = unitToInspect;
         InspectorPanel.GetComponent<UIInspectorPanel>().InspectNewObject();
+    }
+
+    public void PossibleOptionsChange(BasicUnit updatedUnit)
+    {
+        if(updatedUnit == InspectedUnit)
+            InspectorPanel.GetComponent<UIInspectorPanel>().InspectNewObject();
     }
 
     public void EndInspection()

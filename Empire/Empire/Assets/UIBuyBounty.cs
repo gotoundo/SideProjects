@@ -18,6 +18,7 @@ public class UIBuyBounty : MonoBehaviour {
     void Update()
     {
         UIButton.interactable = GameManager.Main.Player.CanAffordBounty();
+        
     }
     public void BuyBounty()
     {
