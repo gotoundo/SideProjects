@@ -142,8 +142,8 @@
     <Compile Include="Assets\SpaceD UGUI\Scripts\Editor\UI\UIWindowEditor.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Prefabs\Buildings\Models\BuildingsPack1_shader.shader" />
-    <None Include="Assets\Prefabs\Buildings\Models\DefenseTurret\readme.txt" />
+    <None Include="Assets\Prefabs\Player Buildings\Models\BuildingsPack1_shader.shader" />
+    <None Include="Assets\Prefabs\Player Buildings\Models\DefenseTurret\readme.txt" />
     <None Include="Assets\SpaceD UGUI\changelog.txt" />
     <None Include="Assets\SpaceD UGUI\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />

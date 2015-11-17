@@ -129,7 +129,8 @@ public class GameManager : MonoBehaviour {
 
     public void PossibleStructureAvailabilityChange()
     {
-        BuildingsPanel.GetComponent<UIBuildingsPanel>().UpdateButtons();
+        if(BuildingsPanel!=null) //this is just to clear up a bug when closing the simulation
+            BuildingsPanel.GetComponent<UIBuildingsPanel>().UpdateButtons();
     }
 
     // INSPECTOR WINDOW LOGIC

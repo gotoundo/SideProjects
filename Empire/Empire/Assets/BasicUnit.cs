@@ -370,6 +370,12 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
         while (AllSpawns.Contains(null))
             AllSpawns.Remove(null);
+
+        foreach(UnitSpawner spawner in Spawners)
+        {
+            while (spawner.Spawns.Contains(null))
+                spawner.Spawns.Remove(null);
+        }
         
         //Move Towards Target's new position
         if (agent != null && agent.isActiveAndEnabled)

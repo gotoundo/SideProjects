@@ -33,6 +33,12 @@ public class Team : MonoBehaviour {
         }
     }
 
+    public List<BasicUnit> GetUnits()
+    {
+        List<BasicUnit> Units = new List<BasicUnit>(currentUnits);
+        return Units;
+    }
+
     public List<BasicUnit> BuildableStructureTemplates()
     {
         List<BasicUnit> buildableStructures = new List<BasicUnit>();

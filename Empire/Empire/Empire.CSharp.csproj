@@ -131,6 +131,7 @@
     <Compile Include="Assets\UIBuyBounty.cs" />
     <Compile Include="Assets\UIBuyStructure.cs" />
     <Compile Include="Assets\UIDeselectionObject.cs" />
+    <Compile Include="Assets\UIHeroList.cs" />
     <Compile Include="Assets\UIInspectorPanel.cs" />
     <Compile Include="Assets\UILevelUpStructure.cs" />
     <Compile Include="Assets\UIPlacementModel.cs" />
@@ -138,8 +139,8 @@
     <Compile Include="Assets\UIResearchButton.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Prefabs\Buildings\Models\BuildingsPack1_shader.shader" />
-    <None Include="Assets\Prefabs\Buildings\Models\DefenseTurret\readme.txt" />
+    <None Include="Assets\Prefabs\Player Buildings\Models\BuildingsPack1_shader.shader" />
+    <None Include="Assets\Prefabs\Player Buildings\Models\DefenseTurret\readme.txt" />
     <None Include="Assets\SpaceD UGUI\changelog.txt" />
     <None Include="Assets\SpaceD UGUI\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />
