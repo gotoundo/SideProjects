@@ -17,6 +17,7 @@ public class BasicAbility : MonoBehaviour {
 	public float castTime;
 	public float channelTime;
 	public float cooldown;
+    public bool DrawLine = false;
 
 	public List<BasicUnit> summonedUnits;
     public int maxSummonedUnits;
@@ -27,6 +28,10 @@ public class BasicAbility : MonoBehaviour {
 	List<BasicUnit> targets;
 	public int levelRequired = 0;
 	public Dictionary<BasicUnit,int> structureLevelsRequired;
+
+    public ParticleSystem CastingVFX;
+    public ParticleSystem EffectStartSourceVFX;
+    public ParticleSystem EffectStartTargetVFX;
 
 
 	BasicUnit Source;
@@ -56,6 +61,23 @@ public class BasicAbility : MonoBehaviour {
 	}
 
 
+    void CreateVFX(ParticleSystem effect, BasicUnit target)
+    {
+        if (effect != null)
+        {
+            GameObject newEffect = Instantiate(effect.gameObject);
+            newEffect.transform.SetParent(target.transform);
+            newEffect.transform.localPosition = new Vector3(0,1,0);
+
+            if (effect.simulationSpace == ParticleSystemSimulationSpace.World)
+                newEffect.transform.SetParent(null);
+
+            if(Source!=null)
+                newEffect.transform.rotation = Source.transform.rotation;
+            Destroy(newEffect, effect.duration);
+        }
+    }
+
 	public void Awake()
 	{
 
@@ -74,6 +96,7 @@ public class BasicAbility : MonoBehaviour {
 		excludedTargetTags = excludedTargetTags ?? new List<BasicUnit.Tag>();
 		summonedUnits = summonedUnits ?? new List<BasicUnit> ();
 		remainingCooldown = cooldown;
+
 	}
 
 	public void Update()
@@ -130,8 +153,11 @@ public class BasicAbility : MonoBehaviour {
         targets = new List<BasicUnit>();
 		targets.Add (target);
 
+        CreateVFX(CastingVFX, Source);
+
         foreach (BasicUnit targetUnit in targets)
         {
+            
             foreach (BasicBuff buff in immediateBuffsPlaced)
             {
                 if (targetUnit != null)
@@ -161,8 +187,11 @@ public class BasicAbility : MonoBehaviour {
 
 		remainingChannelTime = channelTime;
 
-		foreach (BasicUnit targetUnit in targets) {
-			foreach(BasicBuff buff in initialBuffsPlaced)
+        CreateVFX(EffectStartSourceVFX, Source);
+
+        foreach (BasicUnit targetUnit in targets) {
+            CreateVFX(EffectStartTargetVFX, targetUnit);
+            foreach (BasicBuff buff in initialBuffsPlaced)
 			{
 				if(targetUnit != null)
 				{
@@ -192,11 +221,14 @@ public class BasicAbility : MonoBehaviour {
 
 	void ChannelLogic()
 	{
-//		Debug.Log ("ChannelLogic()");
-		LineRenderer lineRenderer = Source.gameObject.GetComponent<LineRenderer> ();
-		lineRenderer.enabled = true;
-		lineRenderer.SetPosition(0, Source.gameObject.transform.position);
-		lineRenderer.SetPosition(1, initialTarget.transform.position);
+        //		Debug.Log ("ChannelLogic()");
+        if (DrawLine)
+        {
+            LineRenderer lineRenderer = Source.gameObject.GetComponent<LineRenderer>();
+            lineRenderer.enabled = true;
+            lineRenderer.SetPosition(0, Source.gameObject.transform.position);
+            lineRenderer.SetPosition(1, initialTarget.transform.position);
+        }
 
 		remainingChannelTime = Tools.DecrementTimer (remainingChannelTime);
 		if (remainingChannelTime <= 0)

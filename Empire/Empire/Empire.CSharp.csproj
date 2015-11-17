@@ -131,6 +131,7 @@
     <Compile Include="Assets\UIBuyBounty.cs" />
     <Compile Include="Assets\UIBuyStructure.cs" />
     <Compile Include="Assets\UIDeselectionObject.cs" />
+    <Compile Include="Assets\UIHealthBar.cs" />
     <Compile Include="Assets\UIHeroList.cs" />
     <Compile Include="Assets\UIInspectorPanel.cs" />
     <Compile Include="Assets\UILevelUpStructure.cs" />

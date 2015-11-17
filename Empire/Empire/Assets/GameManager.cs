@@ -25,6 +25,9 @@ public class GameManager : MonoBehaviour {
     public GameObject InspectorPanel;
     public BasicUnit InspectedUnit;
     public GameObject BuildingsPanel;
+    public GameObject HealthBarTemplate;
+    //public Canvas MainCanvas;
+    public GameObject HealthBarFolder;
 
     public Vector3 MapBounds;
 

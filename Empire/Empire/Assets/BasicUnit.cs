@@ -294,6 +294,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             corpseDuration = 10;
             agent.stoppingDistance = 2;
         }
+
+        GameObject healthBar = Instantiate(GameManager.Main.HealthBarTemplate);
+        healthBar.GetComponent<UIHealthBar>().myUnit = this;
     }
 	
 	// Update is called once per frame
