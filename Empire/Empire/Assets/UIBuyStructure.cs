@@ -12,6 +12,7 @@ public class UIBuyStructure : MonoBehaviour {
 	void Start () {
         UIButton = GetComponent<Button>();
         UIButton.GetComponentInChildren<Text>().text = StructureTemplate.GoldCost + " | " + StructureTemplate.gameObject.name;
+        transform.localScale = new Vector3(1, 1, 1);
 	}
 	
 	// Update is called once per frame

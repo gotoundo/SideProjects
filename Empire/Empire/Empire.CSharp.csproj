@@ -68,11 +68,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Empire.CSharp.Plugins.csproj">
+      <Project>{21DE7076-6BEB-6F8B-2514-E0B253F43A2A}</Project>
+      <Name>Empire.CSharp.Plugins</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Assets\AppManager.cs" />
+    <Compile Include="Assets\AssetManager.cs" />
     <Compile Include="Assets\BasicAbility.cs" />
     <Compile Include="Assets\BasicBounty.cs" />
     <Compile Include="Assets\BasicBuff.cs" />
     <Compile Include="Assets\BasicItem.cs" />
     <Compile Include="Assets\BasicMotivations.cs" />
+    <Compile Include="Assets\BasicProjectile.cs" />
     <Compile Include="Assets\BasicUnit.cs" />
     <Compile Include="Assets\BasicUpgrade.cs" />
     <Compile Include="Assets\CollisionTestScript.cs" />
@@ -125,6 +134,26 @@
     <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIWindowManager.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIWindowTitle.cs" />
     <Compile Include="Assets\Team.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\Demo.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoCameraController.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoChunk.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoEnemy.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoEnemyTower.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoMinimap.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoPlayer.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoPlayerTower.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoTile.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoTileType.cs" />
+    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoWander.cs" />
+    <Compile Include="Assets\TilesOfWar\Scripts\FoWGhost.cs" />
+    <Compile Include="Assets\TilesOfWar\Scripts\FoWManager.cs" />
+    <Compile Include="Assets\TilesOfWar\Scripts\FoWNonPlayerUnit.cs" />
+    <Compile Include="Assets\TilesOfWar\Scripts\FoWPlayerUnit.cs" />
+    <Compile Include="Assets\TilesOfWar\Scripts\FoWTileInfo.cs" />
+    <Compile Include="Assets\TilesOfWar\Scripts\FoWTileState.cs" />
+    <Compile Include="Assets\TilesOfWar\Scripts\GameObjectBag.cs" />
+    <Compile Include="Assets\TilesOfWar\Scripts\VisibilityType.cs" />
+    <Compile Include="Assets\TilesOfWar\Shaders\FoWPro.cs" />
     <Compile Include="Assets\TraitModifier.cs" />
     <Compile Include="Assets\UIBuildUnit.cs" />
     <Compile Include="Assets\UIBuildingsPanel.cs" />
@@ -145,6 +174,9 @@
     <None Include="Assets\SpaceD UGUI\changelog.txt" />
     <None Include="Assets\SpaceD UGUI\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />
+    <None Include="Assets\TilesOfWar\Shaders\FoWOverlay.shader" />
+    <None Include="Assets\TilesOfWar\Shaders\FoWPro.shader" />
+    <None Include="Assets\TilesOfWar\Shaders\FoWProjector.shader" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

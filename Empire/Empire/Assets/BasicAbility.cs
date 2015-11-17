@@ -33,6 +33,11 @@ public class BasicAbility : MonoBehaviour {
     public ParticleSystem EffectStartSourceVFX;
     public ParticleSystem EffectStartTargetVFX;
 
+    public AudioClip EffectStartSourceSFX;
+
+    public BasicProjectile projectile;
+    public float projectileSpeed = 30;
+
 
 	BasicUnit Source;
 
@@ -78,7 +83,17 @@ public class BasicAbility : MonoBehaviour {
         }
     }
 
-	public void Awake()
+    void PlaySFX(AudioClip clip, BasicUnit target)
+    {
+        if(clip!=null)
+        {
+            //   AudioSource.PlayClipAtPoint(clip, target.transform.position,5f);
+            AssetManager.Main.audioSource.PlayOneShot(clip);
+        }
+    }
+
+    
+    public void Awake()
 	{
 
 		ResetAbility ();
@@ -143,6 +158,9 @@ public class BasicAbility : MonoBehaviour {
 
 	}
 
+
+    //Casting Phase
+
 	public void StartCasting(BasicUnit target)
 	{
 		//Debug.Log ("StartCasting()");
@@ -172,56 +190,68 @@ public class BasicAbility : MonoBehaviour {
 
 	void CastingLogic()
 	{
-		//Debug.Log ("CastingLogic()");
 		remainingCastTime = Tools.DecrementTimer (remainingCastTime);
 		if(remainingCastTime <= 0)
 			StartChanneling();
 	}
 
+    //Channeling Phase
+
 	void StartChanneling()
 	{
-		//Debug.Log ("StartChanneling()");
-		//Source.GetComponent<LineRenderer> ().enabled = true;
 		casting = false;
 		channeling = true;
-
 		remainingChannelTime = channelTime;
 
         CreateVFX(EffectStartSourceVFX, Source);
+        PlaySFX(EffectStartSourceSFX, Source);
+        foreach (BasicUnit targetUnit in targets)
+        {
+            if (projectile == null)
+                ApplyEffect(targetUnit);
+            else
+                CreateProjectile(targetUnit);
+        }
+	}
 
-        foreach (BasicUnit targetUnit in targets) {
-            CreateVFX(EffectStartTargetVFX, targetUnit);
-            foreach (BasicBuff buff in initialBuffsPlaced)
-			{
-				if(targetUnit != null)
-				{
-					BasicBuff newBuff = Instantiate(buff).GetComponent<BasicBuff>();
-					newBuff.Setup(Source,targetUnit);
-					newBuff.gameObject.transform.SetParent(targetUnit.gameObject.transform);
-				}
-			}
-		}
+    void CreateProjectile(BasicUnit targetUnit)
+    {
+        GameObject projectileObject = Instantiate(projectile.gameObject);
+        projectileObject.transform.position = transform.position + new Vector3(0,1,0);
+        BasicProjectile projectileInfo = projectileObject.GetComponent<BasicProjectile>();
+        projectileInfo.Initialize(targetUnit, projectileSpeed, this);
+    }
 
-		foreach(BasicUnit summonedUnit in summonedUnits)
-		{
-            if(Source!=null && initialTarget != null)
+    public void ProjectileLanded(BasicUnit targetUnit)
+    {
+        ApplyEffect(targetUnit);
+    }
+
+    void ApplyEffect(BasicUnit targetUnit) //for when the projectile lands
+    {
+        CreateVFX(EffectStartTargetVFX, targetUnit);
+        foreach (BasicBuff buff in initialBuffsPlaced)
+        {
+            if (targetUnit != null)
+            {
+                BasicBuff newBuff = Instantiate(buff).GetComponent<BasicBuff>();
+                newBuff.Setup(Source, targetUnit);
+                newBuff.gameObject.transform.SetParent(targetUnit.gameObject.transform);
+            }
+        }
+
+        foreach (BasicUnit summonedUnit in summonedUnits)
+        {
+            if (Source != null && initialTarget != null)
             {
                 BasicUnit spawnedUnit = Source.Spawn(summonedUnit.gameObject, initialTarget.gameObject.transform.position);
                 existingSummonedUnits.Add(spawnedUnit);
             }
-			/*GameObject unit = Instantiate(summonedUnit.gameObject);
-			if(initialTarget!=null)
-			{
-				unit.transform.position = initialTarget.gameObject.transform.position;
-			}
-			if(Source!=null)
-				unit.GetComponent<BasicUnit>().team = Source.team;*/
-		}
-	}
+        }
+    }
 
-	void ChannelLogic()
+    void ChannelLogic()
 	{
-        //		Debug.Log ("ChannelLogic()");
         if (DrawLine)
         {
             LineRenderer lineRenderer = Source.gameObject.GetComponent<LineRenderer>();
@@ -234,6 +264,9 @@ public class BasicAbility : MonoBehaviour {
 		if (remainingChannelTime <= 0)
 			channeling = false;
 	}
+
+
+    //Finish Phase
 
 	public void FinishAbility()
 	{
@@ -251,6 +284,9 @@ public class BasicAbility : MonoBehaviour {
 			foreach(BasicUnit unit in targets)
 				Destroy(unit.gameObject);
 	}
+
+
+    //Helpers
 
 	public bool isValidTarget(BasicUnit potentialTarget)
 	{

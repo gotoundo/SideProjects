@@ -218,6 +218,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     }
     public List<GameObject> AllSpawns;
 
+    //Occupency
+    List<BasicUnit> Occupants;
+    BasicUnit StructureOccupied;
+
     //Timers - make private
     public float corpseDuration = 0;
     public float remainingCorpseDuration;
@@ -235,6 +239,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     const float shoppingTime = 2f;
     const float healingPotionPower = 50f;
     const int maxPotions = 5;
+    const float maxHuntingDistance = 30f;
     
     // Use this for initialization
     void Awake()
@@ -274,8 +279,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
         foreach (UnitSpawner spawner in Spawners)
             spawner.Initialize(this);
-
-        
 
         if (team == null && Tags.Contains(Tag.Imperial))
             team = GameManager.Main.Player;
@@ -880,7 +883,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                 StopHunting();
                 StartFleeing();
             }
-            else if (MoveTarget != null && MoveTargetUnit.Tags.Contains(Tag.Structure))
+            else if (MoveTarget != null && (MoveTargetUnit.Tags.Contains(Tag.Structure) || Vector3.Distance(MoveTargetUnit.transform.position, transform.position) > maxHuntingDistance))
                 StartHunting(source);
         }
 

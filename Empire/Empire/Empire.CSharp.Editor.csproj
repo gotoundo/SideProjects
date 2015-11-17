@@ -113,12 +113,30 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Empire.CSharp.Plugins.csproj">
+      <Project>{21DE7076-6BEB-6F8B-2514-E0B253F43A2A}</Project>
+      <Name>Empire.CSharp.Plugins</Name>
+    </ProjectReference>
     <ProjectReference Include="Empire.CSharp.csproj">
       <Project>{B2045265-699E-DA59-F3C3-0978EC778091}</Project>
       <Name>Empire.CSharp</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Editor\ImageEffects\AntialiasingEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\BloomAndFlaresEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\BloomEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\CameraMotionBlurEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\ColorCorrectionCurvesEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\ColorCorrectionLookupEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\CreaseShadingEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\DepthOfFieldDeprecatedEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\DepthOfFieldEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\EdgeDetectionEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\NoiseAndGrainEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\SunShaftsEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\TonemappingEditor.cs" />
+    <Compile Include="Assets\Editor\ImageEffects\VignetteAndChromaticAberrationEditor.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\Editor\Enums, Structs and Serializables\AnimationTriggersExtendedDrawer.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\Editor\Enums, Structs and Serializables\ColorBlockExtendedDrawer.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\Editor\Enums, Structs and Serializables\SpriteStateExtendedDrawer.cs" />
@@ -147,6 +165,9 @@
     <None Include="Assets\SpaceD UGUI\changelog.txt" />
     <None Include="Assets\SpaceD UGUI\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />
+    <None Include="Assets\TilesOfWar\Shaders\FoWOverlay.shader" />
+    <None Include="Assets\TilesOfWar\Shaders\FoWPro.shader" />
+    <None Include="Assets\TilesOfWar\Shaders\FoWProjector.shader" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

@@ -24,9 +24,18 @@ public class UIHealthBar : MonoBehaviour {
             Destroy(gameObject);
         else
         {
-            slider.enabled = !myUnit.Tags.Contains(BasicUnit.Tag.Dead);
+            //fill.gameObject.SetActive(!myUnit.Tags.Contains(BasicUnit.Tag.Dead));
+            FoWTileInfo tileinfo = FoWManager.FindInstance().GetTileFromWorldPosition(myUnit.transform.position);
+            if (myUnit.Tags.Contains(BasicUnit.Tag.Dead) || tileinfo.IsHidden)
+                transform.localScale = Vector3.zero;
+            else
+                transform.localScale = new Vector3(1, 1, 1);
+
+            //gameObject.SetActive(!myUnit.Tags.Contains(BasicUnit.Tag.Dead));
             transform.position = Camera.main.WorldToScreenPoint(myUnit.transform.position) + new Vector3(0, -myUnit.transform.localScale.y*10, 0);
             slider.value = myUnit.currentHealth / myUnit.getMaxHP;
+
+            
         }
 	}
 }
