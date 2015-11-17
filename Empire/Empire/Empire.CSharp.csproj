@@ -134,17 +134,6 @@
     <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIWindowManager.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\UI\UIWindowTitle.cs" />
     <Compile Include="Assets\Team.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\Demo.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoCameraController.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoChunk.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoEnemy.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoEnemyTower.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoMinimap.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoPlayer.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoPlayerTower.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoTile.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoTileType.cs" />
-    <Compile Include="Assets\TilesOfWar\Demo\Scripts\DemoWander.cs" />
     <Compile Include="Assets\TilesOfWar\Scripts\FoWGhost.cs" />
     <Compile Include="Assets\TilesOfWar\Scripts\FoWManager.cs" />
     <Compile Include="Assets\TilesOfWar\Scripts\FoWNonPlayerUnit.cs" />
