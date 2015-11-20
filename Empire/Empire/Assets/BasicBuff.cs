@@ -50,7 +50,7 @@ public class BasicBuff : MonoBehaviour { //attached to
 	{
         if (firstTurn && TemporaryTags != null)
             foreach (BasicUnit.Tag tag in TemporaryTags)
-                Target.Tags.Add(tag);
+                Target.AddTag(tag);
 
 
 		float effectPower = totalEffectPower * (firstTurn ? statRatio : statPerSecRatio * Time.deltaTime);
@@ -82,7 +82,7 @@ public class BasicBuff : MonoBehaviour { //attached to
 	{
         if (Target != null && TemporaryTags != null)
             foreach (BasicUnit.Tag tag in TemporaryTags)
-                Target.Tags.Remove(tag);
+                Target.RemoveTag(tag);
 
 		Destroy (gameObject);
 	}

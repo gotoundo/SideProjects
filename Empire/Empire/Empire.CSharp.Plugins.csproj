@@ -109,8 +109,8 @@
     <Compile Include="Assets\Standard Assets\Effects\ImageEffects\Scripts\Vortex.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Prefabs\Player Buildings\Models\BuildingsPack1_shader.shader" />
-    <None Include="Assets\Prefabs\Player Buildings\Models\DefenseTurret\readme.txt" />
+    <None Include="Assets\Prefabs\Buildings (Player)\Models\BuildingsPack1_shader.shader" />
+    <None Include="Assets\Prefabs\Buildings (Player)\Models\DefenseTurret\readme.txt" />
     <None Include="Assets\SpaceD UGUI\changelog.txt" />
     <None Include="Assets\SpaceD UGUI\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />

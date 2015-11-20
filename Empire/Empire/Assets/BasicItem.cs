@@ -5,7 +5,7 @@ using System.Linq;
 
 public class BasicItem : MonoBehaviour
 {
-    public enum ItemType { Claws, Shield, Armor, Potion, Rifle}
+    public enum ItemType { Claws, Shield, Armor, Potion, Rifle,RPG}
     public ItemType Type;
     public int Level;
     public int Cost;

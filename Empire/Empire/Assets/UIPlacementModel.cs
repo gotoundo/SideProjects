@@ -9,9 +9,6 @@ public class UIPlacementModel : MonoBehaviour {
     BasicUnit unitTemplate;
     BasicBounty bountyTemplate;
     public List<Collider> collisions;
-
-    //MeshFilter meshFilter;
-    //MeshRenderer meshRenderer;
     
     public bool Blocked
     {

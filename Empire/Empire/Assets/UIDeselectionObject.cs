@@ -16,7 +16,7 @@ public class UIDeselectionObject : MonoBehaviour, IPointerClickHandler, IDragHan
     
     public void OnPointerClick(PointerEventData eventData)
     {
-        GameManager.Main.EndInspection();
+        //GameManager.Main.EndInspection();
     }
 
     public void OnScroll(PointerEventData eventData)

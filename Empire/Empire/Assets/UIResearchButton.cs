@@ -2,9 +2,11 @@
 using System.Collections;
 using UnityEngine.UI;
 
-public class UIResearchButton : MonoBehaviour {
+public class UIResearchButton : MonoBehaviour
+{
     public Text buttonText;
     public BasicUpgrade upgrade;
+
 
     void Update()
     {
@@ -14,6 +16,9 @@ public class UIResearchButton : MonoBehaviour {
     public void Click()
     {
         if (upgrade.CanUpgrade())
+        {
             upgrade.StartResearch();
+            GameManager.Main.MenuAction();
+        }
     }
 }

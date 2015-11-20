@@ -11,7 +11,7 @@ public class UIBuyBounty : MonoBehaviour {
     void Start()
     {
         UIButton = GetComponent<Button>();
-        UIButton.GetComponentInChildren<Text>().text = BountyTemplate.type.ToString() + " (" + GameManager.defaultBountyIncrement + " gold)";
+        UIButton.GetComponentInChildren<Text>().text = BountyTemplate.type.ToString() + " (" + GameManager.defaultBountyIncrement + ")";
     }
 
     // Update is called once per frame

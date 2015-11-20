@@ -4,7 +4,7 @@ using System.Collections.Generic;
 //Do not instantiate
 public class BasicUpgrade : MonoBehaviour {
     public enum ID { ForgeWeapons1,ForgeWeapons2,ForgeWeapons3,Base1,Base2,Base3,BazaarHealingPotion}
-
+    new public string name;
     public ID id;
     public int Cost;
     public float ResearchTime;
@@ -15,6 +15,7 @@ public class BasicUpgrade : MonoBehaviour {
     bool FinishedResearching = false;
     float remainingResearchTime;
     public bool permanentUpgrade = false;
+
 
     public BasicUnit researcher;
 

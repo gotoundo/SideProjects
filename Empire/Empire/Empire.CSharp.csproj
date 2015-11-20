@@ -13,11 +13,13 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile></CompilerResponseFile>
+    <CompilerResponseFile>
+    </CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows:5</UnityBuildTarget>
     <UnityVersion>5.2.1f1</UnityVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -145,21 +147,21 @@
     <Compile Include="Assets\TilesOfWar\Shaders\FoWPro.cs" />
     <Compile Include="Assets\TraitModifier.cs" />
     <Compile Include="Assets\UIBuildUnit.cs" />
-    <Compile Include="Assets\UIBuildingsPanel.cs" />
     <Compile Include="Assets\UIBuyBounty.cs" />
     <Compile Include="Assets\UIBuyStructure.cs" />
     <Compile Include="Assets\UIDeselectionObject.cs" />
     <Compile Include="Assets\UIHealthBar.cs" />
-    <Compile Include="Assets\UIHeroList.cs" />
     <Compile Include="Assets\UIInspectorPanel.cs" />
     <Compile Include="Assets\UILevelUpStructure.cs" />
     <Compile Include="Assets\UIPlacementModel.cs" />
     <Compile Include="Assets\UIPlayerInfo.cs" />
     <Compile Include="Assets\UIResearchButton.cs" />
+    <Compile Include="Assets\UIResidentButton.cs" />
+    <Compile Include="Assets\UISetScale.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Prefabs\Player Buildings\Models\BuildingsPack1_shader.shader" />
-    <None Include="Assets\Prefabs\Player Buildings\Models\DefenseTurret\readme.txt" />
+    <None Include="Assets\Prefabs\Buildings (Player)\Models\BuildingsPack1_shader.shader" />
+    <None Include="Assets\Prefabs\Buildings (Player)\Models\DefenseTurret\readme.txt" />
     <None Include="Assets\SpaceD UGUI\changelog.txt" />
     <None Include="Assets\SpaceD UGUI\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />

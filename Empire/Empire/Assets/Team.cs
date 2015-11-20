@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEditor;
 using System.Collections.Generic;
 
 public class Team : MonoBehaviour {
@@ -8,15 +9,21 @@ public class Team : MonoBehaviour {
     public int Gold;
 
     public Dictionary<BasicUnit,int> MaxBuildableUnits;
+    protected Dictionary<string, List<BasicUnit>> UnitInstances;
     List<BasicUnit> currentUnits;
     public List<BasicUpgrade.ID> TeamUpgrades;
+    public List<BasicUnit> bannedTemplates;
 
     // Use this for initialization
 
     public void AddUnit(BasicUnit unit)
     {
         currentUnits.Add(unit);
-        GameManager.Main.PossibleStructureAvailabilityChange();
+
+        string templateID = unit.templateID;
+        if (!UnitInstances.ContainsKey(templateID))
+            UnitInstances.Add(templateID, new List<BasicUnit>());
+        UnitInstances[templateID].Add(unit);
     }
 
     public bool HasUnit(BasicUnit unit)
@@ -29,8 +36,19 @@ public class Team : MonoBehaviour {
         if (currentUnits.Contains(unit))
         {
             currentUnits.Remove(unit);
-            GameManager.Main.PossibleStructureAvailabilityChange();
+
+            string templateID = unit.templateID;
+            if (UnitInstances.ContainsKey(templateID))
+                UnitInstances[templateID].Remove(unit);
         }
+    }
+
+    public List<BasicUnit> GetInstances(string templateID)
+    {
+        if (!UnitInstances.ContainsKey(templateID))
+            UnitInstances.Add(templateID, new List<BasicUnit>());
+        return UnitInstances[templateID];
+
     }
 
     public List<BasicUnit> GetUnits()
@@ -55,8 +73,10 @@ public class Team : MonoBehaviour {
     
     void Awake()
     {
+        UnitInstances = new Dictionary<string, List<BasicUnit>>();
         currentUnits = new List<BasicUnit>();
         TeamUpgrades = TeamUpgrades ?? new List<BasicUpgrade.ID>();
+        bannedTemplates = bannedTemplates ?? new List<BasicUnit>();
         MaxBuildableUnits = new Dictionary<BasicUnit, int>();
     }
 
@@ -70,9 +90,55 @@ public class Team : MonoBehaviour {
             currentUnits.Remove(null);
 	}
 
-    public bool CanAffordStructure(BasicUnit Structure)
+    public bool CanAffordStructure(BasicUnit structureTemplate)
     {
-        return Gold >= Structure.GoldCost;
+        return Gold >= structureTemplate.ScaledGoldCost();
+    }
+
+    public bool AllowedToBuildUnit(BasicUnit unitTemplate)
+    {
+        if (unitTemplate.LevelUnlocks.Count == 0)
+            return true;
+
+        foreach(BasicUnit.LevelUnlock.BuildRequirement buildRequirement in unitTemplate.LevelUnlocks[0].StructureRequirements)
+        {
+            //Check Structure Requirements 
+            if(buildRequirement.Structure != null)
+            {
+                string templateID = buildRequirement.Structure.templateID;
+
+                //No Specified Structure Exists
+                if (!UnitInstances.ContainsKey(templateID) || UnitInstances[templateID].Count == 0)
+                {
+                    if (buildRequirement.ShouldExist)
+                        return false;
+                }
+                //Specified Structure Exists
+                else
+                {
+                    List<BasicUnit> Instances = UnitInstances[templateID];
+                    bool levelRequirementMet = false;
+                    foreach (BasicUnit instance in Instances) //Make sure there exists an instance of the required minimum level
+                    {
+                        if (!buildRequirement.ShouldExist)
+                            return false;
+
+                        if (instance.Level >= buildRequirement.MinLevel)
+                            levelRequirementMet = true;
+                    }
+                    if (!levelRequirementMet)
+                        return false;
+                }
+            }
+        }
+
+        foreach (BasicUpgrade.ID upgrade in unitTemplate.LevelUnlocks[0].UpgradesRequired)
+        {
+            if (!unitTemplate.team.TeamUpgrades.Contains(upgrade))
+                return false;
+        }
+
+        return true;
     }
     
     public void EnterPlaceStructureMode(BasicUnit StructureTemplate)
@@ -80,15 +146,19 @@ public class Team : MonoBehaviour {
         GameManager.Main.StartStructurePlacement(StructureTemplate);
     }
 
-    public void PlaceStructure(BasicUnit StructureTemplate, Vector3 position)
+    public BasicUnit PlaceStructure(BasicUnit StructureTemplate, Vector3 position)
     {
         if (CanAffordStructure(StructureTemplate))
         {
             GameObject NewStucture = (GameObject)Instantiate(StructureTemplate.gameObject, position, StructureTemplate.transform.rotation);
             NewStucture.GetComponent<BasicUnit>().team = this;
-            Gold -= StructureTemplate.GoldCost;
+            Gold -= StructureTemplate.ScaledGoldCost();
+            //GameManager.Main.MenuAction();
+            return NewStucture.GetComponent<BasicUnit>();
+            
             //ModifyMaxBuildableUnits(StructureTemplate, StructureTemplate.MaxSpawns);
         }
+        return null;
     }
 
     public bool CanAffordBounty()

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class BasicAbility : MonoBehaviour {
 
-	public enum Shape {Single,Circle}
+	public enum Shape {Single,Explosion}
 
 	//Specified in Inspector
 	public List<BasicUnit.Tag> validTargetTags;
@@ -18,6 +18,7 @@ public class BasicAbility : MonoBehaviour {
 	public float channelTime;
 	public float cooldown;
     public bool DrawLine = false;
+    public float explosionRadius = 0;
 
 	public List<BasicUnit> summonedUnits;
     public int maxSummonedUnits;
@@ -30,13 +31,22 @@ public class BasicAbility : MonoBehaviour {
 	public Dictionary<BasicUnit,int> structureLevelsRequired;
 
     public ParticleSystem CastingVFX;
-    public ParticleSystem EffectStartSourceVFX;
-    public ParticleSystem EffectStartTargetVFX;
+    public ParticleSystem EffectLaunchSourceVFX;
+    public ParticleSystem EffectLandTargetVFX;
+    public ParticleSystem EffectLandPrimaryTargetVFX;
 
-    public AudioClip EffectStartSourceSFX;
+    public AudioClip EffectLaunchSourceSFX;
+    public AudioClip EffectLandPrimaryTargetSFX;
 
     public BasicProjectile projectile;
     public float projectileSpeed = 30;
+
+    //learn requirements
+    public bool learnedAtStructure;
+    public float learnTime;
+    public int minLevelToLearn;
+    public BasicUnit.Stat requiredStat;
+    public int requiredStatValue;
 
 
 	BasicUnit Source;
@@ -203,12 +213,12 @@ public class BasicAbility : MonoBehaviour {
 		channeling = true;
 		remainingChannelTime = channelTime;
 
-        CreateVFX(EffectStartSourceVFX, Source);
-        PlaySFX(EffectStartSourceSFX, Source);
+        CreateVFX(EffectLaunchSourceVFX, Source);
+        PlaySFX(EffectLaunchSourceSFX, Source);
         foreach (BasicUnit targetUnit in targets)
         {
             if (projectile == null)
-                ApplyEffect(targetUnit);
+                ApplyEffectInShape(targetUnit);
             else
                 CreateProjectile(targetUnit);
         }
@@ -224,12 +234,38 @@ public class BasicAbility : MonoBehaviour {
 
     public void ProjectileLanded(BasicUnit targetUnit)
     {
-        ApplyEffect(targetUnit);
+        ApplyEffectInShape(targetUnit);
+    }
+
+    void ApplyEffectInShape(BasicUnit primaryTarget)
+    {
+        CreateVFX(EffectLandPrimaryTargetVFX, primaryTarget);
+        PlaySFX(EffectLandPrimaryTargetSFX, primaryTarget);
+        switch (shape)
+        {
+            case Shape.Single:
+                ApplyEffect(primaryTarget);
+                break;
+            case Shape.Explosion:
+                List<BasicUnit> validTargets = new List<BasicUnit>();
+                Collider[] colliders = Physics.OverlapSphere(primaryTarget.gameObject.transform.position, explosionRadius);
+                for(int i = 0; i<colliders.Length;i++)
+                {
+                    BasicUnit possibleUnit = colliders[i].gameObject.GetComponent<BasicUnit>();
+                    if (possibleUnit != null && isValidTarget(possibleUnit))
+                        validTargets.Add(possibleUnit);
+                }
+                foreach (BasicUnit target in validTargets)
+                    ApplyEffect(target);
+                break;
+            default:
+                break;
+        }
     }
 
     void ApplyEffect(BasicUnit targetUnit) //for when the projectile lands
     {
-        CreateVFX(EffectStartTargetVFX, targetUnit);
+        CreateVFX(EffectLandTargetVFX, targetUnit);
         foreach (BasicBuff buff in initialBuffsPlaced)
         {
             if (targetUnit != null)
@@ -293,15 +329,15 @@ public class BasicAbility : MonoBehaviour {
 		bool acceptableTarget = false;
 		
 		foreach (BasicUnit.Tag tag in validTargetTags)
-			if (potentialTarget.Tags.Contains(tag))
+			if (potentialTarget.HasTag(tag, Source))
 				acceptableTarget = true;
 		
 		foreach (BasicUnit.Tag tag in requiredTargetTags)
-			if (!potentialTarget.Tags.Contains(tag))
+			if (!potentialTarget.HasTag(tag, Source))
 				acceptableTarget = false;
 		
 		foreach (BasicUnit.Tag tag in excludedTargetTags)
-			if (potentialTarget.Tags.Contains(tag))
+			if (potentialTarget.HasTag(tag, Source))
 				acceptableTarget = false;
 		
 		if (abilityOnlyHeals && potentialTarget.AtMaxHealth())

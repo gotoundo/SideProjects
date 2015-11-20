@@ -11,7 +11,7 @@ public class UIHealthBar : MonoBehaviour {
 	void Start () {
         slider = gameObject.GetComponent<Slider>();
         transform.SetParent(GameManager.Main.HealthBarFolder.transform);
-        if (myUnit.Tags.Contains(BasicUnit.Tag.Monster))
+        if (myUnit.HasTag(BasicUnit.Tag.Monster))
             fill.color = Color.grey;
 	}
 	
@@ -26,14 +26,14 @@ public class UIHealthBar : MonoBehaviour {
         {
             //fill.gameObject.SetActive(!myUnit.Tags.Contains(BasicUnit.Tag.Dead));
             FoWTileInfo tileinfo = FoWManager.FindInstance().GetTileFromWorldPosition(myUnit.transform.position);
-            if (myUnit.Tags.Contains(BasicUnit.Tag.Dead) || tileinfo.IsHidden)
+            if (myUnit.HasTag(BasicUnit.Tag.Dead) || tileinfo.IsHidden)
                 transform.localScale = Vector3.zero;
             else
                 transform.localScale = new Vector3(1, 1, 1);
 
             //gameObject.SetActive(!myUnit.Tags.Contains(BasicUnit.Tag.Dead));
-            transform.position = Camera.main.WorldToScreenPoint(myUnit.transform.position) + new Vector3(0, -myUnit.transform.localScale.y*10, 0);
-            slider.value = myUnit.currentHealth / myUnit.getMaxHP;
+            transform.position = Camera.main.WorldToScreenPoint(myUnit.transform.position + new Vector3(0,0, -1));// + new Vector3(0, -myUnit.transform.localScale.y*10, 0
+            slider.value = myUnit.getHealthPercentage;
 
             
         }

@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour {
     public bool Running = false;
     public bool PlacementMode { get { return PlacementModel.activeInHierarchy; } }
 
+    BasicUnit nextInspectionTarget;
+
     public float playTime;
 
     public const int defaultBountyIncrement = 100;
@@ -24,21 +26,67 @@ public class GameManager : MonoBehaviour {
     private GameObject PlacementTemplate;
     public GameObject InspectorPanel;
     public BasicUnit InspectedUnit;
-    public GameObject BuildingsPanel;
+    //public GameObject BuildingsPanel;
     public GameObject HealthBarTemplate;
     //public Canvas MainCanvas;
     public GameObject HealthBarFolder;
 
     public Vector3 MapBounds;
 
-    
+    Vector3 groundCamOffset;
+    Vector3 camTarget;
+    Vector3 camSmoothDampV;
+
+    private Vector3 GetWorldPosAtViewportPoint(float vx, float vy)
+    {
+        Ray worldRay = camera.ViewportPointToRay(new Vector3(vx, vy, 0));
+        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+        float distanceToGround;
+        groundPlane.Raycast(worldRay, out distanceToGround);
+        Debug.Log("distance to ground:" + distanceToGround);
+        return worldRay.GetPoint(distanceToGround);
+    }
+
+    void cameraTrackingSetup()
+    {
+        Vector3 groundPos = GetWorldPosAtViewportPoint(0.5f, 0.5f);
+        Debug.Log("groundPos: " + groundPos);
+        groundCamOffset = camera.transform.position - groundPos;
+        camTarget = camera.transform.position;
+    }
+
+    void cameraTrackingClickTarget()
+    {
+        float mouseX = Input.mousePosition.x / camera.pixelWidth;
+        float mouseY = Input.mousePosition.y / camera.pixelHeight;
+        Vector3 clickPt = GetWorldPosAtViewportPoint(mouseX, mouseY);
+        camTarget = clickPt + groundCamOffset;
+    }
+
+    void cameraTrackingUnitTarget(BasicUnit unit)
+    {
+        camTarget = unit.transform.position + groundCamOffset;
+    }
+
+    void cameraTrackingUpdate()
+    {
+        camera.transform.position = Vector3.SmoothDamp(
+            camera.transform.position, camTarget, ref camSmoothDampV, 0.5f);
+    }
+
+    void cameraTrackingSnapToTarget()
+    {
+        camera.transform.position = camTarget;
+    }
+
+
 
     void Awake()
     {
         Main = this;
         AllTeams = new List<Team>();
         AllBounties = new List<BasicBounty>();
-        MapBounds = new Vector3(200, 0, 200);
+        MapBounds = new Vector3(400, 0, 400);
     }
 
 	// Use this for initialization
@@ -46,14 +94,38 @@ public class GameManager : MonoBehaviour {
         Running = true;
         PlacementModel.SetActive(false);
         InspectorPanel.SetActive(false);
+        cameraTrackingSetup();
+
+        GameObject castle = GameObject.FindGameObjectWithTag("Castle");
+        cameraTrackingUnitTarget(castle.GetComponent<BasicUnit>());
+        cameraTrackingSnapToTarget();
+        StartInspection(castle.GetComponent<BasicUnit>());
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    bool MenuUpdate = false;
+    void Update () {
         //CheckInspectionState();
         StructurePlacementHandler();
         playTime += Time.deltaTime;
+        if(MenuUpdate)
+        {
+            RefreshMenu();
+            MenuUpdate = false;
+        }
 
+        if(nextInspectionTarget != null)
+        {
+            StartInspection(nextInspectionTarget);
+            nextInspectionTarget = null;
+        }
+
+    }
+
+    public void CenterCameraOnUnit(BasicUnit unit, bool track)
+    {
+        cameraTrackingUnitTarget(unit);
+        cameraTrackingSnapToTarget();
     }
 
     // STRUCTURE PLACEMENT LOGIC
@@ -62,7 +134,7 @@ public class GameManager : MonoBehaviour {
     {
         if (PlacementModel.activeInHierarchy)
         {
-            EndInspection(); //don't want two modes at once
+            //EndInspection(); //don't want two modes at once
             Vector3 clickLocation = camera.ScreenToWorldPoint(Input.mousePosition);
             Vector3 placementPosition = camera.ScreenToWorldPoint(Input.mousePosition);
 
@@ -84,9 +156,11 @@ public class GameManager : MonoBehaviour {
             {
                 if (!PlacementModel.GetComponent<UIPlacementModel>().Blocked && Vector3.Distance(placementPosition, PlacementModel.transform.position) < 1f)
                 {//location confirmed, place structure
+
+                    BasicUnit placedUnit = null;
                     if (PlacementModel.GetComponent<UIPlacementModel>().currentMode == UIPlacementModel.PlacementMode.Structure)
                     {
-                        Player.PlaceStructure(PlacementTemplate.GetComponent<BasicUnit>(), placementPosition);
+                        placedUnit = Player.PlaceStructure(PlacementTemplate.GetComponent<BasicUnit>(), placementPosition);
                     }
                     else if (PlacementModel.GetComponent<UIPlacementModel>().currentMode == UIPlacementModel.PlacementMode.ExploreBounty)
                     {
@@ -94,6 +168,8 @@ public class GameManager : MonoBehaviour {
                     }
 
                     EndPlacement();
+                    if (placedUnit != null)
+                        nextInspectionTarget = placedUnit;
                     return;
                 }
             }
@@ -127,14 +203,11 @@ public class GameManager : MonoBehaviour {
     {
         PlacementModel.SetActive(false);
         PlacementTemplate = null;
+        MenuAction();
     }
 
 
-    public void PossibleStructureAvailabilityChange()
-    {
-        if(BuildingsPanel!=null) //this is just to clear up a bug when closing the simulation
-            BuildingsPanel.GetComponent<UIBuildingsPanel>().UpdateButtons();
-    }
+    
 
     // INSPECTOR WINDOW LOGIC
 
@@ -148,7 +221,18 @@ public class GameManager : MonoBehaviour {
     public void PossibleOptionsChange(BasicUnit updatedUnit)
     {
         if(updatedUnit == InspectedUnit)
-            InspectorPanel.GetComponent<UIInspectorPanel>().InspectNewObject();
+            InspectorPanel.GetComponent<UIInspectorPanel>().ObjectUpdated();
+    }
+
+    public void MenuAction()
+    {
+        MenuUpdate = true;
+        
+    }
+
+    void RefreshMenu()
+    {
+        InspectorPanel.GetComponent<UIInspectorPanel>().ObjectUpdated();
     }
 
     public void EndInspection()

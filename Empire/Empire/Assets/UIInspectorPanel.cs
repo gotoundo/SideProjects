@@ -7,17 +7,27 @@ using UnityEngine.UI;
 public class UIInspectorPanel : MonoBehaviour,IDragHandler {
     public Text text;
     public GameObject HireButtonTemplate;
-    public GameObject ResearchButtonTemplate;
-    public GameObject StructureLevelUpButtonTemplate;
-    public GameObject LevelUpSlot;
+    public GameObject UpgradeButtonTemplate;
+    public GameObject StructureButtonTemplate;
+    public GameObject LevelUpButtonTemplate;
+    public GameObject ResidentButtonTemplate;
+
+    public GameObject HirePanel;
+    public GameObject UpgradePanel;
+    public GameObject StructurePanel;
+    public GameObject LevelUpPanel;
+    public GameObject ResidentPanel;
     
     public List<Button> HireButtons;
-    public List<Button> ResearchButtons;
-    public Button StructureLevelUpButton;
+    public List<Button> UpgradeButtons;
+    public List<Button> StructureButtons;
+    public List<Button> LevelUpButtons;
+    public List<Button> ResidentButtons;
+
 
     public void OnDrag(PointerEventData eventData)
     {
-        transform.position += (Vector3)eventData.delta;
+      //  transform.position += (Vector3)eventData.delta;
         
 
         //throw new NotImplementedException();
@@ -27,7 +37,10 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
     {
         text = text ? text : GetComponentInChildren<Text>();
         HireButtons = new List<Button>();
-        ResearchButtons = new List<Button>();
+        UpgradeButtons = new List<Button>();
+        StructureButtons = new List<Button>();
+        LevelUpButtons = new List<Button>();
+        ResidentButtons = new List<Button>();
     }
 
 
@@ -44,12 +57,23 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
         if (myUnit != null)
         {
             text.text = myUnit.name;
-            text.text += "\n" + myUnit.currentState.ToString();
-            text.text += "\n Level " + myUnit.Level + (!myUnit.Tags.Contains(BasicUnit.Tag.Structure) ? " (" + (int)myUnit.XP + " xp)" : "");
-            text.text += "\n" + Mathf.RoundToInt(myUnit.currentHealth) + "/" + myUnit.getMaxHP + " HP";
-            text.text += "\n" + myUnit.Gold + " Gold";
 
-            if (!myUnit.Tags.Contains(BasicUnit.Tag.Structure))
+            if(myUnit.HasTag(BasicUnit.Tag.Hero)||myUnit.HasTag(BasicUnit.Tag.Structure))
+            {
+                text.text+= " (Lvl " + myUnit.Level + ")";
+            }
+
+            if (myUnit.HasTag(BasicUnit.Tag.Hero))
+            {
+                text.text += "\n" + (int)myUnit.XP + " xp";
+                text.text += "\n" + myUnit.currentState.ToString();
+            }
+            text.text += "\n" + Mathf.RoundToInt(myUnit.currentHealth) + "/" + myUnit.getMaxHP + " HP";
+
+            if (myUnit.HasTag(BasicUnit.Tag.Hero)|| myUnit.HasTag(BasicUnit.Tag.Structure))
+                text.text += "\n" + myUnit.Gold + " Gold";
+
+            if (myUnit.HasTag(BasicUnit.Tag.Hero))
             {
                 text.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Strength) + " Strength";
                 text.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Dexterity) + " Dexterity";
@@ -60,10 +84,17 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
                     if (myUnit.EquipmentSlots[i].Instance != null)
                         text.text += "\n Item: " + myUnit.EquipmentSlots[i].Instance.name;
                 }
+                text.text += "\n Salves: " + myUnit.Potions.Count;
             }
         }
         else
             GameManager.Main.EndInspection();
+    }
+
+
+    public void ObjectUpdated()
+    {
+        InspectNewObject();
     }
 
     public void InspectNewObject()
@@ -74,28 +105,36 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
 
         foreach (Button button in HireButtons)
             Destroy(button.gameObject);
-        foreach (Button button in ResearchButtons)
+        foreach (Button button in UpgradeButtons)
             Destroy(button.gameObject);
-        if (StructureLevelUpButton != null)
-            Destroy(StructureLevelUpButton.gameObject);
-        
+        foreach (Button button in StructureButtons)
+            Destroy(button.gameObject);
+        foreach (Button button in LevelUpButtons)
+            Destroy(button.gameObject);
+        foreach (Button button in ResidentButtons)
+            Destroy(button.gameObject);
+
 
         HireButtons = new List<Button>();
-        ResearchButtons = new List<Button>();
+        UpgradeButtons = new List<Button>();
+        StructureButtons = new List<Button>();
+        LevelUpButtons = new List<Button>();
+        ResidentButtons = new List<Button>();
+
+        HirePanel.SetActive(false);
+        UpgradePanel.SetActive(false);
+        StructurePanel.SetActive(false);
+        LevelUpPanel.SetActive(false);
+        ResidentPanel.SetActive(false);
 
         if (inspectedUnit.team == GameManager.Main.Player)
         {
-
             foreach (BasicUnit.UnitSpawner spawner in inspectedUnit.Spawners)
             {
                 if (spawner.canBeHired)
                 {
-                    GameObject hireButton = Instantiate(HireButtonTemplate);
-                    HireButtons.Add(hireButton.GetComponent<Button>());
-                    hireButton.transform.SetParent(transform);
-                    UIBuildUnit buildUnit = hireButton.GetComponent<UIBuildUnit>();
-                    buildUnit.buttonText.text = "Hire " + spawner.SpawnType.gameObject.name + " (" + spawner.SpawnType.GoldCost + ")";
-                    buildUnit.spawner = spawner;
+                    GameObject hireButton = createAndParentButton(HirePanel, HireButtonTemplate, HireButtons, spawner.SpawnType.templateID + " (" + spawner.SpawnType.ScaledGoldCost() + ")");
+                    hireButton.GetComponent<UIBuildUnit>().spawner = spawner;
                 }
             }
 
@@ -103,24 +142,49 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
             {
                 if (upgrade.IsVisible())
                 {
-                    GameObject upgradeButton = Instantiate(ResearchButtonTemplate);
-                    ResearchButtons.Add(upgradeButton.GetComponent<Button>());
-                    upgradeButton.transform.SetParent(transform);
-                    UIResearchButton researchUIObject = upgradeButton.GetComponent<UIResearchButton>();
-                    researchUIObject.buttonText.text = "Research " + upgrade.gameObject.name + " (" + upgrade.Cost + ")";
-                    researchUIObject.upgrade = upgrade;
+                    GameObject upgradeButton = createAndParentButton(UpgradePanel, UpgradeButtonTemplate, UpgradeButtons, upgrade.name + " (" + upgrade.Cost + ")");
+                    upgradeButton.GetComponent<UIResearchButton>().upgrade = upgrade;
                 }
             }
 
-            if(inspectedUnit.Tags.Contains(BasicUnit.Tag.Structure) && inspectedUnit.AnotherStructureLevelExists())
+            foreach (BasicUnit structureTemplate in inspectedUnit.StructuresUnlocked())
             {
-                GameObject levelUpButton = Instantiate(StructureLevelUpButtonTemplate);
-                StructureLevelUpButton = levelUpButton.GetComponent<Button>();
-                levelUpButton.transform.SetParent(LevelUpSlot.transform);
-                UILevelUpStructure levelUpUIObject = levelUpButton.GetComponent<UILevelUpStructure>();
-                levelUpUIObject.buttonText.text = "Level Up " + inspectedUnit.gameObject.name + " (" + inspectedUnit.LevelUpCost()+ ")";
+                GameObject structureButton = createAndParentButton(StructurePanel, StructureButtonTemplate, StructureButtons, structureTemplate.templateID + " (" + structureTemplate.ScaledGoldCost() + ")");
+                structureButton.GetComponent<UIBuyStructure>().StructureTemplate = structureTemplate;
             }
 
+            if (inspectedUnit.HasTag(BasicUnit.Tag.Structure) && inspectedUnit.AnotherStructureLevelExists())
+            {
+                createAndParentButton(LevelUpPanel, LevelUpButtonTemplate, LevelUpButtons,
+                    "Level " + (inspectedUnit.Level + 1) + "(" + inspectedUnit.LevelUpCost() + ")");
+            }
+
+            if (inspectedUnit.HasTag(BasicUnit.Tag.Structure))
+            {
+                foreach (GameObject resident in inspectedUnit.AllSpawns)
+                {
+                    if (resident != null && resident.GetComponent<BasicUnit>().HasTag(BasicUnit.Tag.Hero))
+                    {
+                        GameObject residentButton = createAndParentButton(ResidentPanel, ResidentButtonTemplate, ResidentButtons, resident.name);
+                        residentButton.GetComponent<UIResidentButton>().resident = resident.GetComponent<BasicUnit>();
+                    }
+                }
+            }
+
+
         }
+    }
+
+    GameObject createAndParentButton(GameObject panel, GameObject buttonTemplate, List<Button> buttonCollection, string buttonText)
+    {
+        GameObject buttonObject = Instantiate(buttonTemplate);
+        panel.SetActive(true);
+        buttonObject.transform.SetParent(panel.transform);
+
+        Button buttonData = buttonObject.GetComponent<Button>();
+        buttonData.GetComponentInChildren<Text>().text = buttonText;
+        buttonCollection.Add(buttonData);
+
+        return buttonObject;
     }
 }

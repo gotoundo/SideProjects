@@ -5,6 +5,7 @@ using System.Collections;
 public class UILevelUpStructure : MonoBehaviour {
 
     public Text buttonText;
+    
 
     void Update()
     {
@@ -19,6 +20,7 @@ public class UILevelUpStructure : MonoBehaviour {
         if (GameManager.Main.InspectedUnit.CanAffordToLevelUpStructure())
         {
             GameManager.Main.InspectedUnit.LevelUpStucture();
+            GameManager.Main.MenuAction();
         }
     }
 }

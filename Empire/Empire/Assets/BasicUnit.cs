@@ -7,9 +7,12 @@ using UnityEngine.EventSystems;
 
 public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public bool debugMode = false;
+
+    public string templateID;
+    new public string name;
     
     //Enumerations
-    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed}
+    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed, Enemy, Ally, Neutral}
     public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned, ExploreBounty,KillBounty,DefendBounty } //the probabilities of which state results after "Deciding" is determined per class
 	public enum Stat{ Strength, Dexterity, Intelligence, Special}
 	public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxMana, ManaRegen }
@@ -20,22 +23,29 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     //Attributes and Stats
     Dictionary<Attribute, float> baseAttributes;
 	Dictionary<Stat, float> baseStats;
-	public float initialStrength;
-	public float initialDexterity;
-	public float initialIntelligence;
-	public float initialSpecial; //used for structure abilities
-	public float levelUpStrength;
-	public float levelUpDexterity;
-	public float levelUpIntelligence;
-	public float levelUpSpecial;
 
-	void initializeStatsAndAttributes()
+    [System.Serializable]
+    public class StatBlock
+    {
+        public float initialStrength;
+        public float initialDexterity;
+        public float initialIntelligence;
+        public float initialSpecial; //used for structure abilities
+        public float levelUpStrength;
+        public float levelUpDexterity;
+        public float levelUpIntelligence;
+        public float levelUpSpecial;
+    }
+
+    public StatBlock statBlock;
+
+    void initializeStatsAndAttributes()
 	{
 		baseStats = new Dictionary<Stat, float> ();
-		baseStats.Add (Stat.Strength, initialStrength);
-		baseStats.Add (Stat.Intelligence, initialIntelligence);
-		baseStats.Add (Stat.Dexterity, initialDexterity);
-		baseStats.Add (Stat.Special, initialSpecial);
+		baseStats.Add (Stat.Strength, statBlock.initialStrength);
+		baseStats.Add (Stat.Intelligence, statBlock.initialIntelligence);
+		baseStats.Add (Stat.Dexterity, statBlock.initialDexterity);
+		baseStats.Add (Stat.Special, statBlock.initialSpecial);
 
 		baseAttributes = new Dictionary<Attribute, float> ();
 		baseAttributes.Add (Attribute.AttackSpeed, 0);
@@ -81,14 +91,16 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
 	public float getMaxHP { get { return Mathf.RoundToInt(GetStat(Stat.Strength) * 10f) + GetAttribute(Attribute.MaxHealth); } }
     
+    public float getHealthPercentage {  get { return currentHealth / getMaxHP; } }
+
     //RPG Progression
     public int Gold;
-    public int guildDues;
+    protected int guildDues;
     public float XP; //make private
     public int Level;
     public int GoldCost;
     public int MaxLevel = 30;
-    public int[] LevelUpCosts;
+  //  public int[] LevelUpCosts;
 
     //RPG Combat
     public float currentHealth;
@@ -103,22 +115,36 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     }
 
     //Economy
+    public int GoldPerTick = 0;
     public List<BasicItem> ProductsSold;
     public List<EquipmentSlot> EquipmentSlots;
+    public List<BasicItem> Potions;
+    public float costScaling = 0f;
+    
+    //Building Progression
     public List<BasicUpgrade> AvailableUpgrades;
     public List<BasicUpgrade.ID> ResearchedUpgrades;
-    public List<BasicItem> Potions;
-    public List<LevelUnlock> LevelUnlocks;
 
+    public List<LevelUnlock> LevelUnlocks;
     [System.Serializable]
     public class LevelUnlock
     {
+        public int cost;
+        public List<BasicUpgrade.ID> UpgradesRequired; //used for spawning - should combine this and Structure REquirements to one testing function
+        public List<BuildRequirement> StructureRequirements; //used for structures
         public List<BasicUnit> StructureTemplatesUnlocked;
+
+        [System.Serializable]
+        public class BuildRequirement
+        {
+            public bool ShouldExist = true;
+            public BasicUnit Structure;
+            public int MinLevel = 0;
+        }
     }
 
-    //Core Logic
+    //Core Identifications
     public List<Tag> Tags;
-    public List<BasicUpgrade.ID> UpgradesRequired;
     public State currentState;
     
     //Components
@@ -129,7 +155,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     Rigidbody rigidBody;
 
     //Relationships
-    public GameObject myTemplate;
+    //public GameObject myTemplate;
     public string parentObjectName;
     public Team team;
     GameObject Home;
@@ -179,16 +205,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
         public bool CanSpawn()
         {
-            if (spawningUnit == null || spawningUnit.Tags.Contains(Tag.Dead))
+            if (SpawnType == null || spawningUnit == null || spawningUnit.Tags.Contains(Tag.Dead))
                 return false;
 
-            foreach (BasicUpgrade.ID upgrade in spawningUnit.UpgradesRequired)
-            {
-                BasicUnit homeUnit = spawningUnit.Home.GetComponent<BasicUnit>();
-                if (!homeUnit.ResearchedUpgrades.Contains(upgrade) && !spawningUnit.team.TeamUpgrades.Contains(upgrade))
-                    return false;
-            }
-            return (SpawnType != null && SpawnType.GetComponent<BasicUnit>().GoldCost <= spawningUnit.TeamGold() && Spawns.Count < MaxSpawns);
+            if (spawningUnit.team != null && !spawningUnit.team.AllowedToBuildUnit(SpawnType))
+                return false;
+
+            return (SpawnType.GetComponent<BasicUnit>().GoldCost <= spawningUnit.TeamGold() && Spawns.Count < MaxSpawns);
         }
 
         public void Spawn()
@@ -204,11 +227,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         GameObject spawnedObject = (GameObject)Instantiate(template, position, transform.rotation);
         AllSpawns.Add(spawnedObject);
         BasicUnit spawnedUnit = spawnedObject.GetComponent<BasicUnit>();
-        spawnedUnit.myTemplate = template;
+        //spawnedUnit.myTemplate = template;
         spawnedUnit.Home = gameObject;
         spawnedUnit.parentObjectName = template.gameObject.name;
         spawnedUnit.team = team;
-        spawnedObject.name = template.name;
         if (team != null)
         {
             team.Gold -= spawnedUnit.GoldCost;
@@ -224,10 +246,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     //Timers - make private
     public float corpseDuration = 0;
-    public float remainingCorpseDuration;
-    public float remainingDecideTime; //not implemented yet
-    public float timeSinceLastDamage;
-    public float remainingShoppingTime;
+     float remainingCorpseDuration;
+     float remainingDecideTime; //not implemented yet
+     float timeSinceLastDamage;
+     float remainingShoppingTime;
+     float remainingGoldTickTime;
 
     //Other constants
     const float stoppingDistanceMargin = 2;
@@ -240,7 +263,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     const float healingPotionPower = 50f;
     const int maxPotions = 5;
     const float maxHuntingDistance = 30f;
-    
+    const float levelUpHealAmount = 0.25f;
+    const float goldTickCooldown = 10f;
     // Use this for initialization
     void Awake()
     {
@@ -252,12 +276,23 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         AllSpawns = new List<GameObject>();
         Tags = Tags ?? new List<Tag>();
         Abilities = Abilities ?? new List<BasicAbility>();
-        UpgradesRequired = UpgradesRequired ?? new List<BasicUpgrade.ID>();
+        //UpgradesRequired = UpgradesRequired ?? new List<BasicUpgrade.ID>();
+        //StructureRequirements = StructureRequirements ?? new List<BuildRequirement>(); 
+        remainingGoldTickTime = goldTickCooldown;
        
         initializeStatsAndAttributes();
 
         currentHealth = getMaxHP;
         XP = Mathf.Pow(Level, 2);
+
+        for (int i = 0; i < AvailableUpgrades.Count; i++)
+        {
+            {
+                AvailableUpgrades[i] = Instantiate(AvailableUpgrades[i]).GetComponent<BasicUpgrade>();
+                AvailableUpgrades[i].researcher = this;
+                AvailableUpgrades[i].gameObject.transform.SetParent(transform);
+            }
+        }
     }
 
     void Start () {
@@ -268,14 +303,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                 Abilities[i].gameObject.transform.SetParent(transform);
             }
         }
-        for (int i = 0; i < AvailableUpgrades.Count; i++)
-        {
-            {
-                AvailableUpgrades[i] = Instantiate(AvailableUpgrades[i]).GetComponent<BasicUpgrade>();
-                AvailableUpgrades[i].researcher = this;
-                AvailableUpgrades[i].gameObject.transform.SetParent(transform);
-            }
-        }
+        
 
         foreach (UnitSpawner spawner in Spawners)
             spawner.Initialize(this);
@@ -300,6 +328,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
         GameObject healthBar = Instantiate(GameManager.Main.HealthBarTemplate);
         healthBar.GetComponent<UIHealthBar>().myUnit = this;
+
+        if (name == null || name.Length == 0)
+            name = templateID;
     }
 	
 	// Update is called once per frame
@@ -371,6 +402,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void CleanUp()
     {
+        remainingGoldTickTime = Mathf.Max(0, remainingGoldTickTime - Time.deltaTime);
+        if(remainingGoldTickTime == 0)
+        {
+            remainingGoldTickTime = goldTickCooldown;
+            GainGold(GoldPerTick,false);
+        }
+
         if (currentHealth <= 0 && currentState != State.Dead)
             Die();
 
@@ -429,7 +467,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
             if (Home != null && ShouldIFlee() && Tags.Contains(Tag.Hero))
                 StartFleeing();
-            else if (Home != null && RandomSelection < 10 && currentHealth / getMaxHP < goHomeHealthPercentage)
+            else if (Home != null && RandomSelection < 10 && getHealthPercentage < goHomeHealthPercentage)
                 StartGoingHome();
             else if (RandomSelection < 60)
                 StartHunting();
@@ -901,10 +939,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     {
         if (!disabledStates.Contains(currentState))
         {
-            while (Potions.Count > 0 && currentHealth / getMaxHP < fleeHealthPercentage)
+            while (Potions.Count > 0 && getHealthPercentage < fleeHealthPercentage)
                 UsePotion();
         }
-        return currentHealth / getMaxHP < fleeHealthPercentage;
+        return getHealthPercentage < fleeHealthPercentage;
     }
 
     //DEATH
@@ -1027,13 +1065,14 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             Debug.Log(gameObject.name + " leveled up to " + Level + "!");
         //gameObject.name = (parentObjectName.Length ==0 ? gameObject.name : parentObjectName) + " " + Level;
 
-		baseStats[Stat.Strength] += levelUpStrength;
-		baseStats[Stat.Dexterity] += levelUpDexterity;
-		baseStats[Stat.Intelligence] += levelUpIntelligence;
-		baseStats [Stat.Special] += levelUpSpecial;
+		baseStats[Stat.Strength] += statBlock.levelUpStrength;
+		baseStats[Stat.Dexterity] += statBlock.levelUpDexterity;
+		baseStats[Stat.Intelligence] += statBlock.levelUpIntelligence;
+		baseStats [Stat.Special] += statBlock.levelUpSpecial;
 
-        if(healOnLevelUp)
-        currentHealth = getMaxHP;
+        if (healOnLevelUp)
+            TakeHealing(getMaxHP * levelUpHealAmount,this);
+            
     }
 
 
@@ -1093,7 +1132,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     //Structure Leveling Up
     public bool AnotherStructureLevelExists()
     {
-        return Level < LevelUpCosts.Count();
+        return Level < LevelUnlocks.Count()-1;
     }
 
     public bool CanAffordToLevelUpStructure()
@@ -1103,7 +1142,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     public int LevelUpCost()
     {
-        return LevelUpCosts[Level - 1];
+        return LevelUnlocks[Level+1].cost;
     }
 
     public void LevelUpStucture()
@@ -1111,7 +1150,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         team.Gold -= LevelUpCost();
         LevelUp(false);
         GameManager.Main.PossibleOptionsChange(this);
-        GameManager.Main.PossibleStructureAvailabilityChange();
     }
 
     //UI Considerations
@@ -1157,7 +1195,39 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         {
             foreach (BasicUnit newUnlockedStructure in LevelUnlocks[i].StructureTemplatesUnlocked)
                 structures.Add(newUnlockedStructure);
+            /*foreach (BasicUpgrade.ID upgradeID in LevelUnlocks[i].FreeUpgrades)
+                team.TeamUpgrades.Add(upgradeID);*/
         }
         return structures;
+    }
+
+    public int ScaledGoldCost()
+    {
+        return (int)(GoldCost + GoldCost * costScaling * GameManager.Main.Player.GetInstances(templateID).Count);
+    }
+
+    public bool HasTag(Tag tag, BasicUnit questioner = null)
+    {
+        if (questioner != null)
+        {
+            if (tag == Tag.Self)
+                return questioner == this;
+
+            if (tag == Tag.Ally)
+                return questioner.team == team && !Tags.Contains(Tag.Neutral);
+
+            if (tag == Tag.Enemy)
+                return questioner.team != team && !Tags.Contains(Tag.Neutral);
+        }
+        return Tags.Contains(tag);
+    }
+
+    public void AddTag(Tag tag)
+    {
+        Tags.Add(tag);
+    }
+    public void RemoveTag(Tag tag)
+    {
+        Tags.Remove(tag);
     }
 }
