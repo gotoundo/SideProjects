@@ -346,10 +346,7 @@ public class BasicAbility : MonoBehaviour {
 		return acceptableTarget;
 	}
 
-	public bool isWithinRange(BasicUnit potentialTarget)
-	{
-		return Vector3.Distance(Source.gameObject.transform.position, potentialTarget.gameObject.transform.position) <= range;
-	}
+
 
     void OnDestroy()
     {

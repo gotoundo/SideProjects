@@ -11,6 +11,10 @@ public class UIResearchButton : MonoBehaviour
     void Update()
     {
         GetComponent<Button>().interactable = upgrade.CanUpgrade();
+        if(upgrade.Researching)
+        {
+            buttonText.text = upgrade.name + " (" + (int)(100 * upgrade.ResearchPercentage()) + "%)";
+        }
     }
 
     public void Click()

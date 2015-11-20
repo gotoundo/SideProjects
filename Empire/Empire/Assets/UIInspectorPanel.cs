@@ -24,6 +24,8 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
     public List<Button> LevelUpButtons;
     public List<Button> ResidentButtons;
 
+    public Text HireTitle;
+
 
     public void OnDrag(PointerEventData eventData)
     {
@@ -85,6 +87,11 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
                         text.text += "\n Item: " + myUnit.EquipmentSlots[i].Instance.name;
                 }
                 text.text += "\n Salves: " + myUnit.Potions.Count;
+            }
+
+            if(myUnit.maxHirelings > 0)
+            {
+                HireTitle.text = "Hire Units - " + myUnit.GetHiredHeroes().Count + "/" + myUnit.maxHirelings;
             }
         }
         else

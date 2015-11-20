@@ -15,7 +15,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed, Enemy, Ally, Neutral}
     public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned, ExploreBounty,KillBounty,DefendBounty } //the probabilities of which state results after "Deciding" is determined per class
 	public enum Stat{ Strength, Dexterity, Intelligence, Special}
-	public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxMana, ManaRegen }
+	public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxMana, ManaRegen, Resistance}
 
     List<State> passiveStates = new List<State>( new State[] { State.Exploring, State.ExploreBounty, State.Shopping, State.Sleeping, State.GoingHome }); // these can be interrupted
     List<State> disabledStates = new List<State>(new State[] { State.Stunned}); // these can be interrupted
@@ -121,6 +121,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public List<BasicItem> Potions;
     public float costScaling = 0f;
     
+    
     //Building Progression
     public List<BasicUpgrade> AvailableUpgrades;
     public List<BasicUpgrade.ID> ResearchedUpgrades;
@@ -170,7 +171,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     //Search Radii
     public float huntSearchRadius = 20f;
     float storeSearchRadius = 1000f;
-    float deathGiftRadius = 20f;
+    float deathGiftRadius = 15f;
     public float cryForHelpRadius = 10f;
 	public float exploreRadius = 50f;
 	public bool tetheredToHome = false;
@@ -179,6 +180,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     [System.Serializable]
     public class UnitSpawner
     {
+        public bool hiring;
+        float remainingHireTime;
+
         BasicUnit spawningUnit;
         public bool autoSpawningEnabled = false;
         public bool canBeHired = false;
@@ -191,49 +195,103 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         public void Initialize(BasicUnit spawningUnit)
         {
             this.spawningUnit = spawningUnit;
+            hiring = false;
         }
         
         public void Update()
         {
-            if (!autoSpawningEnabled || Spawns.Count >= MaxSpawns)
-                return;
+            if (autoSpawningEnabled && Spawns.Count <= MaxSpawns)
+            {
+                RemainingSpawnCooldown -= Time.deltaTime;
+                if (RemainingSpawnCooldown <= 0)
+                    AutoSpawn();
+            }
 
-            RemainingSpawnCooldown -= Time.deltaTime;
-            if (RemainingSpawnCooldown <= 0)
-                Spawn();
+            if(hiring)
+            {
+                remainingHireTime -= Time.deltaTime;
+                if (remainingHireTime <= 0)
+                    FinishHiring();
+            }
         }
-
+        
         public bool CanSpawn()
         {
+            if (canBeHired && spawningUnit.hiring)
+                return false;
+
             if (SpawnType == null || spawningUnit == null || spawningUnit.Tags.Contains(Tag.Dead))
                 return false;
 
             if (spawningUnit.team != null && !spawningUnit.team.AllowedToBuildUnit(SpawnType))
                 return false;
 
-            return (SpawnType.GetComponent<BasicUnit>().GoldCost <= spawningUnit.TeamGold() && Spawns.Count < MaxSpawns);
+            bool hirePermission = true;
+            if(canBeHired)
+            {
+                if (spawningUnit.AllSpawns.Count() >= spawningUnit.maxHirelings)
+                    hirePermission = false;
+            }
+
+            return (SpawnType.GetComponent<BasicUnit>().GoldCost <= spawningUnit.TeamGold() && Spawns.Count < MaxSpawns && hirePermission);
         }
 
-        public void Spawn()
+        public void StartHiring()
+        {
+            remainingHireTime = SpawnType.hireTime;
+            hiring = true;
+            spawningUnit.hiring = true;
+            if (spawningUnit.team != null)
+                spawningUnit.team.Gold -= SpawnType.ScaledGoldCost();
+        }
+
+        public void FinishHiring()
+        {
+            hiring = false;
+            spawningUnit.hiring = false;
+            AutoSpawn();
+        }
+
+        public void AutoSpawn()
         {
             Spawns.Add(spawningUnit.Spawn(SpawnType.gameObject, spawningUnit.gameObject.transform.position));
             RemainingSpawnCooldown = SpawnCooldown;
         }
+
+        public float HiringPercentage()
+        {
+            return 1 - (remainingHireTime / SpawnType.hireTime);
+        }
     }
     public List<UnitSpawner> Spawners;
 
+    public float hireTime;
+    public bool hiring;
+    public int maxHirelings;
+
+    public List<BasicUnit> GetHiredHeroes()
+    {
+        List<BasicUnit> heroes = new List<BasicUnit>();
+        foreach(GameObject unitObject in AllSpawns)
+        {
+            if (unitObject != null && unitObject.GetComponent<BasicUnit>() != null && unitObject.GetComponent<BasicUnit>().HasTag(Tag.Hero))
+                heroes.Add(unitObject.GetComponent<BasicUnit>());
+        }
+        return heroes;
+    }
+
+
     public BasicUnit Spawn(GameObject template, Vector3 position)
     {
+        hiring = false;
         GameObject spawnedObject = (GameObject)Instantiate(template, position, transform.rotation);
         AllSpawns.Add(spawnedObject);
         BasicUnit spawnedUnit = spawnedObject.GetComponent<BasicUnit>();
-        //spawnedUnit.myTemplate = template;
         spawnedUnit.Home = gameObject;
         spawnedUnit.parentObjectName = template.gameObject.name;
         spawnedUnit.team = team;
         if (team != null)
         {
-            team.Gold -= spawnedUnit.GoldCost;
             team.AddUnit(spawnedUnit);
         }
         return spawnedUnit;
@@ -253,14 +311,14 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
      float remainingGoldTickTime;
 
     //Other constants
-    const float stoppingDistanceMargin = 2;
+    const float stoppingDistanceMargin = .5f;
     const float sleepRegeneratePercentage = .02f;
     const float fleeHealthPercentage = 0.33f;
     const float goHomeHealthPercentage = 0.8f;
     const float guildTaxRate = 0.3f;
     const float decideTime = 1f;
     const float shoppingTime = 2f;
-    const float healingPotionPower = 50f;
+    const float healingPotionPower = 20f;
     const int maxPotions = 5;
     const float maxHuntingDistance = 30f;
     const float levelUpHealAmount = 0.25f;
@@ -283,7 +341,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         initializeStatsAndAttributes();
 
         currentHealth = getMaxHP;
-        XP = Mathf.Pow(Level, 2);
+        if(Level>1)
+            XP = Mathf.Pow(Level, 2);
 
         for (int i = 0; i < AvailableUpgrades.Count; i++)
         {
@@ -376,6 +435,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
         foreach (UnitSpawner spawner in Spawners)
             spawner.Update();
+
         CleanUp();
 	}
 
@@ -389,7 +449,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         MoveTarget = null;
         currentAbility = null;
         ExploreTarget = Vector3.zero;
-        //BountyTarget = null;
         currentState = newState;
     }
 
@@ -397,7 +456,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     {
         if (currentState == State.Exploring)
             return Vector3.Distance(transform.position, ExploreTarget) < agent.stoppingDistance + stoppingDistanceMargin;
-        return Vector3.Distance(transform.position, MoveTarget.transform.position) < agent.stoppingDistance + stoppingDistanceMargin;
+        return isWithinRange(MoveTarget, agent.stoppingDistance + stoppingDistanceMargin);
     }
 
     void CleanUp()
@@ -495,7 +554,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     //GOING HOME
     void StartGoingHome() {
-        agent.stoppingDistance = 5;
+        agent.stoppingDistance = 1;
         SetNewState(State.GoingHome);
     }
     void GoingHomeLogic()
@@ -664,7 +723,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         }
         else
         {
-            agent.stoppingDistance = 3;
+            agent.stoppingDistance = 1;
             if (WithinActivationRange())
                 BrowseWares();
         }
@@ -811,7 +870,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 	{
 		currentAbility = pickedAbility;
 		currentAbility.ResetAbility();
-		agent.stoppingDistance = currentAbility.range - stoppingDistanceMargin;
+        agent.stoppingDistance = currentAbility.range - stoppingDistanceMargin;
 	}
 
 	void PickAbility()
@@ -833,18 +892,18 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 			return;
 		}
 
-		if (currentAbility.isWithinRange (initialAbilityTarget)) {
+		if (isWithinRange (initialAbilityTarget.gameObject, currentAbility.range)) {
             RotateTowards(initialAbilityTarget.gameObject.transform);
             //Debug.Log ("In range of ability!");
             if (currentAbility.CanCast() && !currentAbility.running) {
 
+                animator.SetBool("Firing", true);
                 currentAbility.StartCasting (initialAbilityTarget);
                 if (agent)
                     agent.Stop();
             }
 		}
 
-        animator.SetBool("Firing",  true);
 
         if (currentAbility.finished) {
             if (agent)
@@ -944,6 +1003,18 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         }
         return getHealthPercentage < fleeHealthPercentage;
     }
+
+    public bool isWithinRange(GameObject potentialTarget, float range)
+    {
+        RaycastHit[] hitInfo = Physics.RaycastAll(transform.position, potentialTarget.transform.position - transform.position, range);
+        for (int i = 0; i < hitInfo.Length; i++)
+        {
+            if (hitInfo[i].collider.gameObject.GetInstanceID() == potentialTarget.gameObject.GetInstanceID())
+                return true;
+        }
+        return false;
+    }
+
 
     //DEATH
 

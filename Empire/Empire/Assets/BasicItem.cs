@@ -1,10 +1,13 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 
 public class BasicItem : MonoBehaviour
 {
+    new public string name;
+    public Image icon;
     public enum ItemType { Claws, Shield, Armor, Potion, Rifle,RPG}
     public ItemType Type;
     public int Level;

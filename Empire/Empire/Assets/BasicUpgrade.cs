@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 //Do not instantiate
 public class BasicUpgrade : MonoBehaviour {
-    public enum ID { ForgeWeapons1,ForgeWeapons2,ForgeWeapons3,Base1,Base2,Base3,BazaarHealingPotion}
+    public enum ID { ForgeWeapons1,ForgeWeapons2,ForgeWeapons3,Base1,Base2,Base3,BazaarHealingPotion, ForgeArmor1, ForgeArmor2,ForgeArmor3}
     new public string name;
     public ID id;
     public int Cost;
@@ -11,7 +11,7 @@ public class BasicUpgrade : MonoBehaviour {
     public List<BasicItem> ItemsUnlockedForSale;
     public List<ID> UpgradesRequired;
     public int RequiredBuildingLevel;
-    bool Researching = false;
+    public bool Researching = false;
     bool FinishedResearching = false;
     float remainingResearchTime;
     public bool permanentUpgrade = false;
@@ -26,7 +26,7 @@ public class BasicUpgrade : MonoBehaviour {
 
     public float ResearchPercentage()
     {
-        return remainingResearchTime / ResearchTime;
+        return 1 - (remainingResearchTime / ResearchTime);
     }
     
     public bool IsVisible()

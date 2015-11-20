@@ -12,13 +12,17 @@ public class UIBuildUnit : MonoBehaviour
     void Update()
     {
         GetComponent<Button>().interactable = spawner.CanSpawn();
+        if(spawner.hiring)
+            buttonText.text = spawner.SpawnType.templateID + " (" + (int)(100 * spawner.HiringPercentage()) + "%)";
+        else
+            buttonText.text = spawner.SpawnType.templateID + " (" + spawner.SpawnType.ScaledGoldCost() + ")";
     }
 
     public void Click()
     {
         if (spawner.CanSpawn())
         {
-            spawner.Spawn();
+            spawner.StartHiring();
             GameManager.Main.MenuAction();
         }
     }

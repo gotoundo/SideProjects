@@ -97,8 +97,7 @@ public class GameManager : MonoBehaviour {
         cameraTrackingSetup();
 
         GameObject castle = GameObject.FindGameObjectWithTag("Castle");
-        cameraTrackingUnitTarget(castle.GetComponent<BasicUnit>());
-        cameraTrackingSnapToTarget();
+        CenterCameraOnUnit(castle.GetComponent<BasicUnit>(), false);
         StartInspection(castle.GetComponent<BasicUnit>());
     }
 
