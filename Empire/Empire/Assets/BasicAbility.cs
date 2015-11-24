@@ -69,6 +69,7 @@ public class BasicAbility : MonoBehaviour {
 	public bool casting;
 	public bool channeling;
 	public bool finished;
+    public bool nullTarget;
 
 	public bool Running()
 	{
@@ -133,19 +134,16 @@ public class BasicAbility : MonoBehaviour {
 			remainingCooldown = Tools.DecrementTimer (remainingCooldown);
 		}
 		else {
-
-            if(initialTarget == null)
+            nullTarget = initialTarget == null;
+            if (!nullTarget)
             {
-                FinishAbility();
-                return;
+                if (casting)
+                    CastingLogic();
+                else if (channeling)
+                    ChannelLogic();
+                else
+                    FinishAbility();
             }
-
-			if(casting)
-				CastingLogic();
-			else if(channeling)
-				ChannelLogic();
-			else
-				FinishAbility();
 		}
 	}
 
@@ -178,6 +176,7 @@ public class BasicAbility : MonoBehaviour {
 		casting = true;
 		channeling = false;
 		remainingCastTime = castTime;
+        remainingChannelTime = channelTime;
         targets = new List<BasicUnit>();
 		targets.Add (target);
 
@@ -200,6 +199,7 @@ public class BasicAbility : MonoBehaviour {
 
 	void CastingLogic()
 	{
+        Source.SetAnimationState("Firing", true);
 		remainingCastTime = Tools.DecrementTimer (remainingCastTime);
 		if(remainingCastTime <= 0)
 			StartChanneling();
@@ -306,16 +306,21 @@ public class BasicAbility : MonoBehaviour {
 
 	public void FinishAbility()
 	{
-		//Debug.Log ("FinishAbility() - setting running to false");
 		if (Source != null) {
-			Source.GetComponent<LineRenderer> ().enabled = false;
-		}
+            if(Source.debugMode)
+                Debug.Log("FinishAbility() - setting running to false");
+            Source.GetComponent<LineRenderer> ().enabled = false;
+            Source.SetAnimationState("Firing", false);
+        }
 
 		remainingCooldown = cooldown;
-		finished = true;
+        remainingCastTime = 0;
+        remainingChannelTime = 0;
+        finished = true;
 		casting = false;
 		channeling = false;
 		running = false;
+        
 		if(consumesTargets)
 			foreach(BasicUnit unit in targets)
 				Destroy(unit.gameObject);

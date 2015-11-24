@@ -310,6 +310,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
      float remainingShoppingTime;
      float remainingGoldTickTime;
 
+    //animation
+    public string AttackAnimation;
+
     //Other constants
     const float stoppingDistanceMargin = .5f;
     const float sleepRegeneratePercentage = .02f;
@@ -337,11 +340,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         //UpgradesRequired = UpgradesRequired ?? new List<BasicUpgrade.ID>();
         //StructureRequirements = StructureRequirements ?? new List<BuildRequirement>(); 
         remainingGoldTickTime = goldTickCooldown;
-       
+
         initializeStatsAndAttributes();
 
         currentHealth = getMaxHP;
-        if(Level>1)
+        if (Level > 1)
             XP = Mathf.Pow(Level, 2);
 
         for (int i = 0; i < AvailableUpgrades.Count; i++)
@@ -352,6 +355,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                 AvailableUpgrades[i].gameObject.transform.SetParent(transform);
             }
         }
+
+        if (AttackAnimation.Length != 0)
+            animator.SetBool(AttackAnimation, true);
     }
 
     void Start () {
@@ -826,12 +832,15 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         
         if(MoveTarget == null) //find unit to focus on
         {
+            currentAbility = null;
             List<BasicUnit> acceptableTargets = chooseAbilityAndFindPossibleTargets();
 
             acceptableTargets = sortByDistance(acceptableTargets);
 
             if (acceptableTargets.Count != 0)
+            {
                 MoveTarget = acceptableTargets[0].gameObject; //Random.Range(0, acceptableTargets.Count) //pick closest target
+            }
         }
 
         if (MoveTarget != null)
@@ -878,7 +887,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		PickAbility (Abilities [0]);
 	}
 
-    void ChannelAbility() //only activated if cooldown is 0
+    void ChannelAbility() //only activated if cooldown is 0 and target isn't null
     {
         agent.SetDestination(MoveTarget.transform.position);
 
@@ -887,7 +896,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 			PickAbility();
 
         if (!currentAbility.isValidTarget(initialAbilityTarget)) {
-			//Debug.Log("Initial target no longer valid! Cancelling ability use.");
+            if(debugMode)
+                Debug.Log("Initial target no longer valid! Cancelling ability use.");
 			InterruptAbility ();
 			return;
 		}
@@ -896,8 +906,6 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
             RotateTowards(initialAbilityTarget.gameObject.transform);
             //Debug.Log ("In range of ability!");
             if (currentAbility.CanCast() && !currentAbility.running) {
-
-                animator.SetBool("Firing", true);
                 currentAbility.StartCasting (initialAbilityTarget);
                 if (agent)
                     agent.Stop();
@@ -911,19 +919,28 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		}
     }
 
+
+    public void SetAnimationState(string animationName, bool value)
+    {
+        if (animator != null)
+            animator.SetBool(animationName, value);
+
+    }
+
     private void RotateTowards(Transform target)
     {
         Vector3 direction = (target.position - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * agent.angularSpeed);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * agent.angularSpeed/100f);
     }
 
     void InterruptAbility()
     {
-        animator.SetBool("Firing", false);
-        if (currentAbility != null && !currentAbility.finished) {
-            if(debugMode)
-			Debug.Log ("Ability Interrupted");
+        SetAnimationState("Firing", false);
+        if (currentAbility != null)
+        { // && !currentAbility.finished
+            if (debugMode)
+			    Debug.Log ("Ability Interrupted");
 			currentAbility.FinishAbility();
 		}
 		currentAbility = null;
@@ -960,8 +977,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public void TakeDamage(float damage, BasicUnit source)
     {
         timeSinceLastDamage = 0;
-        if (debugMode)
-            Debug.Log(gameObject.name + " is taking " + damage + " damage from " + source.gameObject.name);
+      //  if (debugMode)
+         //   Debug.Log(gameObject.name + " is taking " + damage + " damage from " + source.gameObject.name);
 
         currentHealth -= Mathf.Max(0, damage);
 
@@ -1021,25 +1038,32 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     void Die()
     {
         SetNewState(State.Dead);
-        if (agent != null)
+        if (agent != null && agent.isActiveAndEnabled)
         {
             agent.speed = 0;
             agent.Stop();
+            agent.enabled = false;
+        }
+
+        NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
+
+        if(obstacle!=null)
+        {
+            obstacle.enabled = false;
         }
 
         if (!Tags.Contains(Tag.Dead))
         { //then initialize the death state
-            
+
             Tags.Add(Tag.Dead);
             remainingCorpseDuration = corpseDuration;
 
             if (Tags.Contains(Tag.Monster))
                 OnDeathDistributeGoldAndXP();
 
-            
-            if (animator != null)
-                animator.SetBool("Dead", true);
-            
+
+            SetAnimationState("Dead", true);
+
             renderer.material.color = Color.grey;
         }
 
