@@ -9,6 +9,7 @@ public class UIPlacementModel : MonoBehaviour {
     BasicUnit unitTemplate;
     BasicBounty bountyTemplate;
     public List<Collider> collisions;
+    GameObject TempModel;
     
     public bool Blocked
     {
@@ -19,8 +20,7 @@ public class UIPlacementModel : MonoBehaviour {
     {
         currentMode = PlacementMode.Structure;
         this.unitTemplate = unitTemplate;
-        assumeDimentions(unitTemplate.gameObject);
-
+        assumeDimentions(unitTemplate.StructureVisual);
     }
 
     public void SetBountyTemplate(BasicBounty bountyTemplate)
@@ -32,10 +32,19 @@ public class UIPlacementModel : MonoBehaviour {
 
     void assumeDimentions(GameObject template)
     {
+
+        if (TempModel != null)
+            Destroy(TempModel);
+
         collisions = new List<Collider>();
-        transform.localScale = template.transform.localScale;
-        transform.rotation = template.transform.rotation;
-        GetComponent<MeshFilter>().mesh = template.GetComponent<MeshFilter>().sharedMesh;
+
+        TempModel = Instantiate(template);
+        TempModel.transform.SetParent(transform);
+        TempModel.transform.localPosition = Vector3.zero;
+
+        //transform.localScale = template.transform.localScale;
+        //transform.rotation = template.transform.rotation;
+        //GetComponent<MeshFilter>().mesh = template.GetComponent<MeshFilter>().sharedMesh;
         assignColor();
     }
 
@@ -55,10 +64,19 @@ public class UIPlacementModel : MonoBehaviour {
     {
         if (unitTemplate != null)
         {
+            MeshRenderer[] Renderers = TempModel.GetComponentsInChildren<MeshRenderer>();
             if (Blocked)
-                GetComponent<MeshRenderer>().material.color = Color.red;
+            {
+                foreach (MeshRenderer renderer in Renderers)
+                    renderer.material.color = Color.red;
+                //TempModel.GetComponent<MeshRenderer>().material.color = Color.red;
+            }
             else
-                GetComponent<MeshRenderer>().material = unitTemplate.gameObject.GetComponent<MeshRenderer>().sharedMaterial;
+            {
+                foreach (MeshRenderer renderer in Renderers)
+                    renderer.material.color = Color.green;
+            }
+                //TempModel.GetComponent<MeshRenderer>().material = unitTemplate.StructureVisual.GetComponent<MeshRenderer>().sharedMaterial;
         }
 
     }

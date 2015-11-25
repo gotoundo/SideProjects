@@ -74,6 +74,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\3D Resources\SpaceRebel\FxChimney.cs" />
+    <Compile Include="Assets\3D Resources\SpaceRebel\FxRotator.cs" />
     <Compile Include="Assets\AppManager.cs" />
     <Compile Include="Assets\AssetManager.cs" />
     <Compile Include="Assets\BasicAbility.cs" />
@@ -159,9 +161,10 @@
     <Compile Include="Assets\UISetScale.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\3DRT\Gladiators\gladiators-animations list.TXT" />
-    <None Include="Assets\Prefabs\Buildings (Player)\Models\BuildingsPack1_shader.shader" />
-    <None Include="Assets\Prefabs\Buildings (Player)\Models\DefenseTurret\readme.txt" />
+    <None Include="Assets\3D Resources\Gladiators\gladiators-animations list.TXT" />
+    <None Include="Assets\3D Resources\SpaceRebel\readme.txt" />
+    <None Include="Assets\3D Resources\White Buildings\BuildingsPack1_shader.shader" />
+    <None Include="Assets\3D Resources\White Buildings\DefenseTurret\readme.txt" />
     <None Include="Assets\SpaceD UGUI\changelog.txt" />
     <None Include="Assets\SpaceD UGUI\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />

@@ -125,6 +125,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     //Building Progression
     public List<BasicUpgrade> AvailableUpgrades;
     public List<BasicUpgrade.ID> ResearchedUpgrades;
+    public GameObject StructureVisual;
 
     public List<LevelUnlock> LevelUnlocks;
     [System.Serializable]
@@ -134,6 +135,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         public List<BasicUpgrade.ID> UpgradesRequired; //used for spawning - should combine this and Structure REquirements to one testing function
         public List<BuildRequirement> StructureRequirements; //used for structures
         public List<BasicUnit> StructureTemplatesUnlocked;
+        public GameObject StructureVisualTemplate;
 
         [System.Serializable]
         public class BuildRequirement
