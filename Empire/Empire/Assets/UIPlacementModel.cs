@@ -21,6 +21,7 @@ public class UIPlacementModel : MonoBehaviour {
         currentMode = PlacementMode.Structure;
         this.unitTemplate = unitTemplate;
         assumeDimentions(unitTemplate.StructureVisual);
+        assignColor();
     }
 
     public void SetBountyTemplate(BasicBounty bountyTemplate)
@@ -62,8 +63,8 @@ public class UIPlacementModel : MonoBehaviour {
 
     void assignColor()
     {
-        if (unitTemplate != null)
-        {
+        //if (unitTemplate != null)
+        //{
             MeshRenderer[] Renderers = TempModel.GetComponentsInChildren<MeshRenderer>();
             if (Blocked)
             {
@@ -77,7 +78,7 @@ public class UIPlacementModel : MonoBehaviour {
                     renderer.material.color = Color.green;
             }
                 //TempModel.GetComponent<MeshRenderer>().material = unitTemplate.StructureVisual.GetComponent<MeshRenderer>().sharedMaterial;
-        }
+       // }
 
     }
 

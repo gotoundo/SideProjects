@@ -9,8 +9,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public bool debugMode = false;
 
     public string templateID;
+    public string templateDescription;
     new public string name;
-    
+   
     //Enumerations
     public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed, Enemy, Ally, Neutral}
     public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, Shopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned, ExploreBounty,KillBounty,DefendBounty } //the probabilities of which state results after "Deciding" is determined per class
@@ -202,7 +203,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         
         public void Update()
         {
-            if (autoSpawningEnabled && Spawns.Count <= MaxSpawns)
+            if (autoSpawningEnabled && Spawns.Count < MaxSpawns)
             {
                 RemainingSpawnCooldown -= Time.deltaTime;
                 if (RemainingSpawnCooldown <= 0)
@@ -760,8 +761,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
                 BasicItem soldItem = store.ProductsSold[product];
                 if (EquipmentSlots[slot].Type == soldItem.Type && soldItem.Cost <= Gold)
                 {
-                    if (soldItem.Type == BasicItem.ItemType.Potion && Potions.Count() < maxPotions)
-                        desiredItems.Add(soldItem);
+                    if (soldItem.Type == BasicItem.ItemType.Potion)
+                    {
+                        if (Potions.Count() < maxPotions)
+                            desiredItems.Add(soldItem);
+                    }
                     else if (EquipmentSlots[slot].Instance == null || soldItem.Level > EquipmentSlots[slot].Instance.Level)
                         desiredItems.Add(soldItem);
                 }

@@ -4,20 +4,26 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 //using System;
 
-public class UIInspectorPanel : MonoBehaviour,IDragHandler {
-    public Text text;
+public class UIInspectorPanel : MonoBehaviour {
+
+    public static UIInspectorPanel Main;
+
+    public Text StatusText;
     public GameObject HireButtonTemplate;
     public GameObject UpgradeButtonTemplate;
     public GameObject StructureButtonTemplate;
     public GameObject LevelUpButtonTemplate;
     public GameObject ResidentButtonTemplate;
 
+    List<GameObject> Panels;
     public GameObject HirePanel;
     public GameObject UpgradePanel;
     public GameObject StructurePanel;
     public GameObject LevelUpPanel;
     public GameObject ResidentPanel;
-    
+    public GameObject DescriptionPanel;
+
+    public List<List<Button>> ButtonCollections;
     public List<Button> HireButtons;
     public List<Button> UpgradeButtons;
     public List<Button> StructureButtons;
@@ -25,24 +31,26 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
     public List<Button> ResidentButtons;
 
     public Text HireTitle;
+    public Text DescriptionHeader;
+    public Text DescriptionBody;
+    public Text DescriptionButtonText;
 
 
-    public void OnDrag(PointerEventData eventData)
-    {
-      //  transform.position += (Vector3)eventData.delta;
-        
-
-        //throw new NotImplementedException();
-    }
+    
+    
 
     void Awake()
     {
-        text = text ? text : GetComponentInChildren<Text>();
+        Main = this;
+        StatusText = StatusText ? StatusText : GetComponentInChildren<Text>();
         HireButtons = new List<Button>();
         UpgradeButtons = new List<Button>();
         StructureButtons = new List<Button>();
         LevelUpButtons = new List<Button>();
         ResidentButtons = new List<Button>();
+
+        Panels = new List<GameObject>(new GameObject[] { HirePanel, UpgradePanel, StructurePanel,LevelUpPanel,ResidentPanel,DescriptionPanel });
+        ButtonCollections = new List<List<Button>>(new List<Button>[] {HireButtons,UpgradeButtons,StructureButtons,LevelUpButtons,ResidentButtons });
     }
 
 
@@ -52,87 +60,116 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
 	
 	}
 
+    bool descriptionMode = false;
+
+    public bool ToggleDescriptionMode()
+    {
+        if (descriptionMode)
+            ExitDescriptionMode();
+        else
+            EnterDescriptionMode();
+        return descriptionMode;
+    }
+
+    public void EnterDescriptionMode()
+    {
+
+        StatusText.gameObject.SetActive(false);
+        descriptionMode = true;
+        foreach (GameObject panel in Panels)
+            panel.SetActive(false);
+        DescriptionPanel.SetActive(true);
+        BasicUnit myUnit = GameManager.Main.InspectedUnit;
+        DescriptionHeader.text = myUnit.templateID;
+        DescriptionBody.text = myUnit.templateDescription.Replace("[n]", "\n");
+        DescriptionButtonText.text = "X";
+    }
+
+    public void ExitDescriptionMode()
+    {
+        StatusText.gameObject.SetActive(true);
+        descriptionMode = false;
+        InspectNewObject();
+        DescriptionButtonText.text = "?";
+    }
+
     // Update is called once per frame
     void Update()
     {
         BasicUnit myUnit = GameManager.Main.InspectedUnit;
         if (myUnit != null)
         {
-            text.text = myUnit.name;
-
-            if(myUnit.HasTag(BasicUnit.Tag.Hero)||myUnit.HasTag(BasicUnit.Tag.Structure))
+            if (!descriptionMode)
             {
-                text.text+= " (Lvl " + myUnit.Level + ")";
-            }
-
-            if (myUnit.HasTag(BasicUnit.Tag.Hero))
-            {
-                text.text += "\n" + (int)myUnit.XP + " xp";
-                text.text += "\n" + myUnit.currentState.ToString();
-            }
-            text.text += "\n" + Mathf.RoundToInt(myUnit.currentHealth) + "/" + myUnit.getMaxHP + " HP";
-
-            if (myUnit.HasTag(BasicUnit.Tag.Hero)|| myUnit.HasTag(BasicUnit.Tag.Structure))
-                text.text += "\n" + myUnit.Gold + " Gold";
-
-            if (myUnit.HasTag(BasicUnit.Tag.Hero))
-            {
-                text.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Strength) + " Strength";
-                text.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Dexterity) + " Dexterity";
-                text.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Intelligence) + " Intelligence";
-
-                for (int i = 0; i < myUnit.EquipmentSlots.Count; i++)
-                {
-                    if (myUnit.EquipmentSlots[i].Instance != null)
-                        text.text += "\n Item: " + myUnit.EquipmentSlots[i].Instance.name;
-                }
-                text.text += "\n Salves: " + myUnit.Potions.Count;
-            }
-
-            if(myUnit.maxHirelings > 0)
-            {
-                HireTitle.text = "Hire Units - " + myUnit.GetHiredHeroes().Count + "/" + myUnit.maxHirelings;
+                UpdateUnitStatus(myUnit);
             }
         }
         else
             GameManager.Main.EndInspection();
     }
 
+    void UpdateUnitStatus(BasicUnit myUnit)
+    {
+        StatusText.gameObject.SetActive(true);
+        StatusText.text = myUnit.name;
+
+        if (myUnit.HasTag(BasicUnit.Tag.Hero) || myUnit.HasTag(BasicUnit.Tag.Structure))
+        {
+            StatusText.text += " (Lvl " + myUnit.Level + ")";
+        }
+
+        if (myUnit.HasTag(BasicUnit.Tag.Hero))
+        {
+            StatusText.text += "\n" + (int)myUnit.XP + " xp";
+            StatusText.text += "\n" + myUnit.currentState.ToString();
+        }
+        StatusText.text += "\n" + Mathf.RoundToInt(myUnit.currentHealth) + "/" + myUnit.getMaxHP + " HP";
+
+        if (myUnit.HasTag(BasicUnit.Tag.Hero) || myUnit.HasTag(BasicUnit.Tag.Structure))
+            StatusText.text += "\n" + myUnit.Gold + " Gold";
+
+        if (myUnit.HasTag(BasicUnit.Tag.Hero))
+        {
+            StatusText.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Strength) + " Strength";
+            StatusText.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Dexterity) + " Dexterity";
+            StatusText.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Intelligence) + " Intelligence";
+
+            for (int i = 0; i < myUnit.EquipmentSlots.Count; i++)
+            {
+                if (myUnit.EquipmentSlots[i].Instance != null)
+                    StatusText.text += "\n Item: " + myUnit.EquipmentSlots[i].Instance.name;
+            }
+            StatusText.text += "\n Salves: " + myUnit.Potions.Count;
+        }
+
+        if (myUnit.maxHirelings > 0)
+        {
+            HireTitle.text = "Hire Units - " + myUnit.GetHiredHeroes().Count + "/" + myUnit.maxHirelings;
+        }
+    }
+
 
     public void ObjectUpdated()
     {
-        InspectNewObject();
+        if(!descriptionMode)
+            InspectNewObject();
     }
 
     public void InspectNewObject()
     {
+        descriptionMode = false;
+        
         BasicUnit inspectedUnit = GameManager.Main.InspectedUnit;
 
-        text.text = inspectedUnit.name;
+        foreach (List<Button> buttonCollection in ButtonCollections)
+        {
+            foreach (Button button in buttonCollection)
+                Destroy(button.gameObject);
+            buttonCollection.Clear();
+        }
 
-        foreach (Button button in HireButtons)
-            Destroy(button.gameObject);
-        foreach (Button button in UpgradeButtons)
-            Destroy(button.gameObject);
-        foreach (Button button in StructureButtons)
-            Destroy(button.gameObject);
-        foreach (Button button in LevelUpButtons)
-            Destroy(button.gameObject);
-        foreach (Button button in ResidentButtons)
-            Destroy(button.gameObject);
-
-
-        HireButtons = new List<Button>();
-        UpgradeButtons = new List<Button>();
-        StructureButtons = new List<Button>();
-        LevelUpButtons = new List<Button>();
-        ResidentButtons = new List<Button>();
-
-        HirePanel.SetActive(false);
-        UpgradePanel.SetActive(false);
-        StructurePanel.SetActive(false);
-        LevelUpPanel.SetActive(false);
-        ResidentPanel.SetActive(false);
+        foreach (GameObject panel in Panels)
+            panel.SetActive(false);
 
         if (inspectedUnit.team == GameManager.Main.Player)
         {
@@ -177,8 +214,6 @@ public class UIInspectorPanel : MonoBehaviour,IDragHandler {
                     }
                 }
             }
-
-
         }
     }
 

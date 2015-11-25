@@ -182,6 +182,8 @@ public class GameManager : MonoBehaviour {
         PlacementModel.SetActive(true);
         PlacementModel.GetComponent<UIPlacementModel>().SetStructureTemplate(structure);
         StartPlacement(structure.gameObject);
+        StartInspection(structure);
+        UIInspectorPanel.Main.EnterDescriptionMode();
     }
 
     public void StartBountyPlacement(BasicBounty bounty)
@@ -202,7 +204,15 @@ public class GameManager : MonoBehaviour {
     {
         PlacementModel.SetActive(false);
         PlacementTemplate = null;
-        MenuAction();
+        UIInspectorPanel.Main.ExitDescriptionMode();
+        //MenuAction();
+
+    }
+
+    public void CancelPlacement()
+    {
+        StartInspection(GameObject.FindGameObjectWithTag("Castle").GetComponent<BasicUnit>());
+        EndPlacement();
     }
 
 
