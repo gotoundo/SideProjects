@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 //Do not instantiate
 public class BasicUpgrade : MonoBehaviour {
-    public enum ID { ForgeWeapons1,ForgeWeapons2,ForgeWeapons3,Base1,Base2,Base3,BazaarHealingPotion, ForgeArmor1, ForgeArmor2,ForgeArmor3}
+    public enum ID { ForgeWeapons1,ForgeWeapons2,ForgeWeapons3,Base1,Base2,Base3,BazaarHealingPotion, ForgeArmor1, ForgeArmor2,ForgeArmor3,
+    WeaponEnchantment1,WeaponEnchantment2,WeaponEnchantment3,ArmorEnchantment1,ArmorEnchantment2,ArmorEnchantment3}
     new public string name;
     public ID id;
     public int Cost;
@@ -15,9 +16,13 @@ public class BasicUpgrade : MonoBehaviour {
     bool FinishedResearching = false;
     float remainingResearchTime;
     public bool permanentUpgrade = false;
-
-
+    public List<BasicItem.Enchantment> ItemEnchantments;
     public BasicUnit researcher;
+    
+    public int GetCost()
+    {
+        return (int)(Cost * researcher.team.researchCostMultiplier);
+    }
 
     public bool IsResearching()
     {
@@ -42,13 +47,13 @@ public class BasicUpgrade : MonoBehaviour {
 
     public bool CanUpgrade()
     {
-        return IsVisible() && researcher.team.Gold >= Cost && !Researching &&!FinishedResearching;
+        return IsVisible() && researcher.team.Gold >= GetCost() && !Researching &&!FinishedResearching;
     }
 
     public void StartResearch()
     {
-        researcher.team.Gold -= Cost;
-        remainingResearchTime = ResearchTime;
+        researcher.team.Gold -= GetCost();
+        remainingResearchTime = ResearchTime * researcher.team.researchTimeMultiplier;
         Researching = true;
         GameManager.Main.PossibleOptionsChange(researcher);
     }
@@ -60,6 +65,7 @@ public class BasicUpgrade : MonoBehaviour {
         researcher.AvailableUpgrades.Remove(this);
         researcher.ResearchedUpgrades.Add(id);
         researcher.ProductsSold.AddRange(ItemsUnlockedForSale);
+        researcher.ItemEnchantmentsSold.AddRange(ItemEnchantments);
 
         researcher.team.TeamUpgrades.Add(id);
 

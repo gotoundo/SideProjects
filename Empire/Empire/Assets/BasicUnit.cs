@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine.EventSystems;
 
 
-public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
+public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, IScrollHandler{
     public bool debugMode = false;
 
     public string templateID;
@@ -58,7 +58,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 		baseAttributes.Add (Attribute.MoveSpeed, agent?agent.speed:0);
 		baseAttributes.Add (Attribute.None, 0);
 		baseAttributes.Add (Attribute.PhysicalDamage, 0);
-	}
+        baseAttributes.Add(Attribute.Resistance, 0);
+    }
 	public int GetStat(Stat stat) //stat mods are added or subtracted
 	{
 		float baseStat = baseStats [stat];
@@ -69,7 +70,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 			{
 				for(int j =0; j <item.StatEffects.Count(); j++)
 					if(item.StatEffects[j].stat == stat)
-						baseStat += item.StatEffects[j].value;
+						baseStat += item.StatEffects[j].value+item.EnchantmentLevel;
 			}
 		}
 		return Mathf.RoundToInt(baseStat);
@@ -84,7 +85,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 			{
 				for(int j =0; j <item.AttributeEffects.Count(); j++)
 					if(item.AttributeEffects[j].attribute == attribute)
-						baseAttribute += item.AttributeEffects[j].value;
+						baseAttribute += item.AttributeEffects[j].value+item.EnchantmentLevel;
 			}
 		}
 		return baseAttribute;
@@ -116,11 +117,18 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     }
 
     //Economy
-    public int GoldPerTick = 0;
+    public int GoldPerTick = 0; //workaround doesn't work - units should contribute this to team if they're not structures
     public List<BasicItem> ProductsSold;
     public List<EquipmentSlot> EquipmentSlots;
     public List<BasicItem> Potions;
     public float costScaling = 0f;
+    public float researchTimeReduction = 0f;
+    public float researchCostReduction = 0f;
+    public float structureCostReduction = 0f;
+    
+
+    public List<BasicItem.Enchantment> ItemEnchantmentsSold;
+
     
     
     //Building Progression
@@ -203,18 +211,21 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         
         public void Update()
         {
-            if (autoSpawningEnabled && Spawns.Count < MaxSpawns)
+            if (GameManager.Playing)
             {
-                RemainingSpawnCooldown -= Time.deltaTime;
-                if (RemainingSpawnCooldown <= 0)
-                    AutoSpawn();
-            }
+                if (autoSpawningEnabled && Spawns.Count < MaxSpawns)
+                {
+                    RemainingSpawnCooldown -= Time.deltaTime;
+                    if (RemainingSpawnCooldown <= 0)
+                        AutoSpawn();
+                }
 
-            if(hiring)
-            {
-                remainingHireTime -= Time.deltaTime;
-                if (remainingHireTime <= 0)
-                    FinishHiring();
+                if (hiring)
+                {
+                    remainingHireTime -= Time.deltaTime;
+                    if (remainingHireTime <= 0)
+                        FinishHiring();
+                }
             }
         }
         
@@ -329,6 +340,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     const float maxHuntingDistance = 30f;
     const float levelUpHealAmount = 0.25f;
     const float goldTickCooldown = 10f;
+    const float normalUnitCorpseDuration = 10f;
+    const float runningSpeedThreshhold = 0.05f;
+    const float defaultStoppingDistance = 2f;
+    const float shoppingStoppingDistance = 1f;
     // Use this for initialization
     void Awake()
     {
@@ -340,6 +355,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         AllSpawns = new List<GameObject>();
         Tags = Tags ?? new List<Tag>();
         Abilities = Abilities ?? new List<BasicAbility>();
+        ItemEnchantmentsSold = ItemEnchantmentsSold ?? new List<BasicItem.Enchantment>();
         //UpgradesRequired = UpgradesRequired ?? new List<BasicUpgrade.ID>();
         //StructureRequirements = StructureRequirements ?? new List<BuildRequirement>(); 
         remainingGoldTickTime = goldTickCooldown;
@@ -382,6 +398,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         if(team!=null && !team.HasUnit(this))
             team.AddUnit(this);
 
+        if(team!=null)
+        {
+            team.structureCostMultiplier -= structureCostReduction;
+            team.researchTimeMultiplier -= researchTimeReduction;
+            team.researchCostMultiplier -= researchCostReduction;
+        }
+
         if (Tags.Contains(Tag.Structure)) //Structure Setup
         {
             SetNewState(State.Structure);
@@ -390,8 +413,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         else //Normal Unit Setup
         {
             SetNewState(State.Deciding);
-            corpseDuration = 10;
-            agent.stoppingDistance = 2;
+            corpseDuration = normalUnitCorpseDuration;
+            agent.stoppingDistance = defaultStoppingDistance;
         }
 
         GameObject healthBar = Instantiate(GameManager.Main.HealthBarTemplate);
@@ -403,49 +426,52 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 	
 	// Update is called once per frame
 	void Update () {
-        timeSinceLastDamage += Time.deltaTime;
-
-        switch (currentState) //This is the only place the Logic functions should be called
+        if (GameManager.Playing)
         {
-            case State.Deciding: //add a random duration - for structures this will be 0
-                DecideLogic();
-                break;
-            case State.Exploring:
-                ExploreLogic();
-                break;
-            case State.Hunting:
-                HuntingLogic();
-                break;
-            case State.Shopping:
-                ShoppingLogic();
-                break;
-            case State.GoingHome:
-                GoingHomeLogic();
-                break;
-            case State.Sleeping:
-                SleepLogic();
-                break;
-            case State.Fleeing:
-                FleeingLogic();
-                break;
-            case State.Dead:
-                Die();
-                break;
-            case State.ExploreBounty:
-                ExploreBountyLogic();
-                break;
+            timeSinceLastDamage += Time.deltaTime;
 
-            default:
-                break;
+            switch (currentState) //This is the only place the Logic functions should be called
+            {
+                case State.Deciding: //add a random duration - for structures this will be 0
+                    DecideLogic();
+                    break;
+                case State.Exploring:
+                    ExploreLogic();
+                    break;
+                case State.Hunting:
+                    HuntingLogic();
+                    break;
+                case State.Shopping:
+                    ShoppingLogic();
+                    break;
+                case State.GoingHome:
+                    GoingHomeLogic();
+                    break;
+                case State.Sleeping:
+                    SleepLogic();
+                    break;
+                case State.Fleeing:
+                    FleeingLogic();
+                    break;
+                case State.Dead:
+                    Die();
+                    break;
+                case State.ExploreBounty:
+                    ExploreBountyLogic();
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (!Tags.Contains(Tag.Structure))
+                animator.SetBool("Walking", agent.velocity.magnitude > runningSpeedThreshhold);
+
+            foreach (UnitSpawner spawner in Spawners)
+                spawner.Update();
+
+            CleanUp();
         }
-
-        if(!Tags.Contains(Tag.Structure))
-        animator.SetBool("Walking", agent.velocity.magnitude > 0.05f);
-
-        foreach (UnitSpawner spawner in Spawners)
-            spawner.Update();
-
-        CleanUp();
 	}
 
     void SetNewState(State newState, string reason = "")
@@ -673,7 +699,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     void ExploreLogic()
     {
-        agent.stoppingDistance = 2;
+        agent.stoppingDistance = defaultStoppingDistance;
 
         if(!agent.pathPending)
         {
@@ -732,7 +758,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         }
         else
         {
-            agent.stoppingDistance = 1;
+            agent.stoppingDistance = shoppingStoppingDistance;
             if (WithinActivationRange())
                 BrowseWares();
         }
@@ -744,8 +770,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         if (remainingShoppingTime <= 0)
         {
             List<BasicItem> affordableItems = ItemsICanAffordAtStore(MoveTargetUnit);
+            List<BasicItem.Enchantment> affordableEnchantments = EnchantmentsICanAffordAtStore(MoveTargetUnit);
             if (affordableItems.Count > 0)
                 BuyItem(affordableItems[0]);
+            if (affordableEnchantments.Count > 0)
+                BuyEnchantment(affordableEnchantments[0]);
             DoneShopping();
         }
     }
@@ -774,6 +803,23 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         return desiredItems;
     }
 
+    List<BasicItem.Enchantment> EnchantmentsICanAffordAtStore(BasicUnit store)
+    {
+        List<BasicItem.Enchantment> AffordableEnchantments = new List<BasicItem.Enchantment>();
+        foreach (BasicItem.Enchantment enchantment in store.ItemEnchantmentsSold)
+        {
+            if (enchantment.EnchantCost <= Gold)
+            {
+                foreach (EquipmentSlot slot in EquipmentSlots)
+                {
+                    if (enchantment.GetEnchantTypes().Contains(slot.Type) && slot.Instance != null && slot.Instance.EnchantmentLevel < enchantment.EnchantLevel)
+                        AffordableEnchantments.Add(enchantment);
+                }
+            }
+        }
+        return AffordableEnchantments;
+    }
+
     void BuyItem(BasicItem soldItem)
     {
         Gold -= soldItem.Cost;
@@ -800,18 +846,40 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
         }
     }
 
+    void BuyEnchantment(BasicItem.Enchantment enchantment)
+    {
+        Gold -= enchantment.EnchantCost;
+        MoveTargetUnit.GainGold(enchantment.EnchantCost, false);
+
+        foreach (EquipmentSlot slot in EquipmentSlots)
+        {
+            if (enchantment.GetEnchantTypes().Contains(slot.Type) && slot.Instance!=null)
+            {
+                if(enchantment.EnchantLevel > slot.Instance.EnchantmentLevel)
+                {
+                    slot.Instance.EnchantmentLevel = enchantment.EnchantLevel;
+                    Debug.Log(name + " purchased a +" + enchantment.EnchantLevel + " " + slot.Type.ToString() + " enchantment at " + MoveTargetUnit.name+"!");
+                }
+            }
+        }
+    }
+
     BasicUnit FindStore()
     {
         List<BasicUnit> initialTargets = GetUnitsWithinRange(storeSearchRadius);
         List<BasicUnit> acceptableTargets = new List<BasicUnit>();
         foreach (BasicUnit encounteredUnit in initialTargets)
-            if (encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team && ItemsICanAffordAtStore(encounteredUnit).Count > 0)
+            if (encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team)
+                if(ItemsICanAffordAtStore(encounteredUnit).Count > 0 || EnchantmentsICanAffordAtStore(encounteredUnit).Count>0)
                 acceptableTargets.Add(encounteredUnit);
 
         if (acceptableTargets.Count > 0)
             return acceptableTargets[Random.Range(0, acceptableTargets.Count - 1)];
         return null;
     }
+
+   
+
 
     void DoneShopping()
     {
@@ -983,8 +1051,12 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     public void TakeDamage(float damage, BasicUnit source)
     {
         timeSinceLastDamage = 0;
-      //  if (debugMode)
-         //   Debug.Log(gameObject.name + " is taking " + damage + " damage from " + source.gameObject.name);
+
+        if (damage > 1)
+        {
+            damage -= GetAttribute(Attribute.Resistance);
+            damage = Mathf.Max(damage, 1);
+        }
 
         currentHealth -= Mathf.Max(0, damage);
 
@@ -1258,6 +1330,14 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     {
         GameManager.Main.StartInspection(this);
     }
+    public void OnDrag(PointerEventData eventData)
+    {
+        UIScreenDrag.Main.OnDrag(eventData);
+    }
+    public void OnScroll(PointerEventData eventData)
+    {
+        UIScreenDrag.Main.OnScroll(eventData);
+    }
 
     //Other stuff
     bool UsePotion()
@@ -1278,7 +1358,12 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
     void OnDestroy()
     {
         if (team != null && team.HasUnit(this))
+        {
+            team.structureCostMultiplier += structureCostReduction;
+            team.researchTimeMultiplier += researchTimeReduction;
+            team.researchCostMultiplier += researchCostReduction;
             team.RemoveUnit(this);
+        }
     }
 
     int TeamGold()
@@ -1304,7 +1389,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler{
 
     public int ScaledGoldCost()
     {
-        return (int)(GoldCost + GoldCost * costScaling * GameManager.Main.Player.GetInstances(templateID).Count);
+        float scaledGoldCost = GoldCost + GoldCost * costScaling * GameManager.Main.Player.GetInstances(templateID).Count;
+        if (HasTag(Tag.Structure) && HasTag(Tag.Imperial))
+        {
+            scaledGoldCost *= GameManager.Main.Player.structureCostMultiplier;
+            scaledGoldCost = Mathf.RoundToInt(scaledGoldCost / 5.0f) * 5;
+        }
+        return (int)(scaledGoldCost);
     }
 
     public bool HasTag(Tag tag, BasicUnit questioner = null)

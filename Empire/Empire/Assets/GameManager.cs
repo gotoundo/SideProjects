@@ -6,14 +6,18 @@ using UnityEngine.EventSystems;
 public class GameManager : MonoBehaviour {
 
     public static GameManager Main;
+    public LevelData levelData;
     new public Camera camera;
    // public float Date;
+
     public Team Player;
     public List<Team> AllTeams;
     public List<BasicBounty> AllBounties;
     public GameObject BountyTemplate;
-    public bool Running = false;
+    bool Running = false;
     public bool PlacementMode { get { return PlacementModel.activeInHierarchy; } }
+
+    List<BasicUnit> AllInitialEnemyStructures;
 
     BasicUnit nextInspectionTarget;
 
@@ -30,8 +34,17 @@ public class GameManager : MonoBehaviour {
     public GameObject HealthBarTemplate;
     //public Canvas MainCanvas;
     public GameObject HealthBarFolder;
+    public GameObject StoryPanel;
+    public GameObject PlayerInfoPanel;
+    public GameObject ServicesPanel;
+    public GameObject WinPanel;
+    public GameObject LosePanel;
+    public GameObject OptionsPanel;
 
     public Vector3 MapBounds;
+
+
+    GameObject castle;
 
     Vector3 groundCamOffset;
     Vector3 camTarget;
@@ -43,14 +56,14 @@ public class GameManager : MonoBehaviour {
         Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
         float distanceToGround;
         groundPlane.Raycast(worldRay, out distanceToGround);
-        Debug.Log("distance to ground:" + distanceToGround);
+        //Debug.Log("distance to ground:" + distanceToGround);
         return worldRay.GetPoint(distanceToGround);
     }
 
     void cameraTrackingSetup()
     {
         Vector3 groundPos = GetWorldPosAtViewportPoint(0.5f, 0.5f);
-        Debug.Log("groundPos: " + groundPos);
+        //Debug.Log("groundPos: " + groundPos);
         groundCamOffset = camera.transform.position - groundPos;
         camTarget = camera.transform.position;
     }
@@ -79,6 +92,10 @@ public class GameManager : MonoBehaviour {
         camera.transform.position = camTarget;
     }
 
+    public static bool Playing
+    {
+        get { return Main.Running; }
+    }
 
 
     void Awake()
@@ -86,7 +103,7 @@ public class GameManager : MonoBehaviour {
         Main = this;
         AllTeams = new List<Team>();
         AllBounties = new List<BasicBounty>();
-        MapBounds = new Vector3(400, 0, 400);
+        //MapBounds = new Vector3(400, 0, 400);
     }
 
 	// Use this for initialization
@@ -94,30 +111,92 @@ public class GameManager : MonoBehaviour {
         Running = true;
         PlacementModel.SetActive(false);
         InspectorPanel.SetActive(false);
+        WinPanel.SetActive(false);
+        LosePanel.SetActive(false);
+        OptionsPanel.SetActive(false);
+        
         cameraTrackingSetup();
 
-        GameObject castle = GameObject.FindGameObjectWithTag("Castle");
+        castle = GameObject.FindGameObjectWithTag("Castle");
         CenterCameraOnUnit(castle.GetComponent<BasicUnit>(), false);
         StartInspection(castle.GetComponent<BasicUnit>());
+
+        AllInitialEnemyStructures = new List<BasicUnit>();
+        foreach(BasicUnit unit in FindObjectsOfType<BasicUnit>())
+            if(unit!=null && unit.HasTag(BasicUnit.Tag.Monster) && unit.HasTag(BasicUnit.Tag.Structure))
+                AllInitialEnemyStructures.Add(unit);
+
+        StoryPanelStart();
+    }
+
+    void ShowHUD(bool value)
+    {
+        InspectorPanel.SetActive(value);
+        PlayerInfoPanel.SetActive(value);
+        ServicesPanel.SetActive(value);
     }
 
     // Update is called once per frame
     bool MenuUpdate = false;
-    void Update () {
-        //CheckInspectionState();
-        StructurePlacementHandler();
-        playTime += Time.deltaTime;
-        if(MenuUpdate)
+    void Update()
+    {
+        if (Playing)
         {
-            RefreshMenu();
-            MenuUpdate = false;
-        }
+            StructurePlacementHandler();
+            playTime += Time.deltaTime;
+            if (MenuUpdate)
+            {
+                RefreshMenu();
+                MenuUpdate = false;
+            }
 
-        if(nextInspectionTarget != null)
-        {
-            StartInspection(nextInspectionTarget);
-            nextInspectionTarget = null;
+            if (nextInspectionTarget != null)
+            {
+                StartInspection(nextInspectionTarget);
+                nextInspectionTarget = null;
+            }
+
+            CheckGameOver();
         }
+    }
+
+    //GAME COMPLETION LOGIC
+    void CheckGameOver()
+    {
+        while (AllInitialEnemyStructures.Contains(null))
+            AllInitialEnemyStructures.Remove(null);
+
+        if(castle==null)
+        {
+            EndGame();
+            LoseLogic();
+        }
+        else if (AllInitialEnemyStructures.Count == 0)
+        {
+            EndGame();
+            WinLogic();
+        }
+    }
+
+    void EndGame()
+    {
+        ShowHUD(false);
+        Running = false;
+    }
+
+    void WinLogic()
+    {
+        WinPanel.SetActive(true);
+        SaveGame();
+    }
+
+    void LoseLogic()
+    {
+        LosePanel.SetActive(true);
+    }
+
+    void SaveGame()
+    {
 
     }
 
@@ -211,7 +290,7 @@ public class GameManager : MonoBehaviour {
 
     public void CancelPlacement()
     {
-        StartInspection(GameObject.FindGameObjectWithTag("Castle").GetComponent<BasicUnit>());
+        StartInspection(castle.GetComponent<BasicUnit>());
         EndPlacement();
     }
 
@@ -248,5 +327,21 @@ public class GameManager : MonoBehaviour {
     {
         InspectorPanel.SetActive(false);
         InspectedUnit = null;
+    }
+
+    //Story Panel Logic
+
+    public void StoryPanelStart()
+    {
+        ShowHUD(false);
+        StoryPanel.gameObject.SetActive(true);
+        Running = false;
+    }
+
+    public void StoryPanelEnd()
+    {
+        ShowHUD(true);
+        StoryPanel.gameObject.SetActive(false);
+        Running = true;
     }
 }

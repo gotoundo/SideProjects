@@ -127,24 +127,29 @@ public class BasicAbility : MonoBehaviour {
 
 	public void Update()
 	{
-        while (existingSummonedUnits.Contains(null))
-            existingSummonedUnits.Remove(null);
+        if (GameManager.Playing)
+        {
+            while (existingSummonedUnits.Contains(null))
+                existingSummonedUnits.Remove(null);
 
-		if (!running) {
-			remainingCooldown = Tools.DecrementTimer (remainingCooldown);
-		}
-		else {
-            nullTarget = initialTarget == null;
-            if (!nullTarget)
+            if (!running)
             {
-                if (casting)
-                    CastingLogic();
-                else if (channeling)
-                    ChannelLogic();
-                else
-                    FinishAbility();
+                remainingCooldown = Tools.DecrementTimer(remainingCooldown);
             }
-		}
+            else
+            {
+                nullTarget = initialTarget == null;
+                if (!nullTarget)
+                {
+                    if (casting)
+                        CastingLogic();
+                    else if (channeling)
+                        ChannelLogic();
+                    else
+                        FinishAbility();
+                }
+            }
+        }
 	}
 
 	public bool CanCast()

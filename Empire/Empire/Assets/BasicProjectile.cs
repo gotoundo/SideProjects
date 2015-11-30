@@ -22,17 +22,20 @@ public class BasicProjectile : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
-        if (Target != null)
+        if (GameManager.Playing)
         {
-            Vector3 targetLocation = Target.transform.position + new Vector3(0, 1, 0);
-
-            transform.position = Vector3.MoveTowards(transform.position, targetLocation, Speed * Time.deltaTime);
-            if (Vector3.Distance(transform.position, targetLocation) <= 0)
+            if (Target != null)
             {
-                if (Ability != null)
+                Vector3 targetLocation = Target.transform.position + new Vector3(0, 1, 0);
+
+                transform.position = Vector3.MoveTowards(transform.position, targetLocation, Speed * Time.deltaTime);
+                if (Vector3.Distance(transform.position, targetLocation) <= 0)
                 {
-                    Ability.ProjectileLanded(Target);
-                    Destroy(gameObject);
+                    if (Ability != null)
+                    {
+                        Ability.ProjectileLanded(Target);
+                        Destroy(gameObject);
+                    }
                 }
             }
         }

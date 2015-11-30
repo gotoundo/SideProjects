@@ -13,6 +13,11 @@ public class Team : MonoBehaviour {
     public List<BasicUpgrade.ID> TeamUpgrades;
     public List<BasicUnit> bannedTemplates;
 
+    public float researchTimeMultiplier = 1f;
+    public float structureCostMultiplier = 1f;
+    public float researchCostMultiplier = 1f;
+
+
     // Use this for initialization
 
     public void AddUnit(BasicUnit unit)

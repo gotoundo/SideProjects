@@ -84,7 +84,7 @@ public class UIPlacementModel : MonoBehaviour {
 
     void OnTriggerEnter(Collider other)
     {
-        Debug.Log("Collision!");
+        //Debug.Log("Collision!");
         if (isBlockingObject(other) && !collisions.Contains(other))
             collisions.Add(other);
     }

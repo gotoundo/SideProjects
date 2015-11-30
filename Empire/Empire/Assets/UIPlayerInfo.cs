@@ -11,9 +11,9 @@ public class UIPlayerInfo : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if(GameManager.Main.Running)
+        if(GameManager.Playing)
         {
-            PlayerGoldAmount.text = "Gold: "+GameManager.Main.Player.Gold;
+            PlayerGoldAmount.text = "Credits: "+GameManager.Main.Player.Gold;
         }
 	}
 }

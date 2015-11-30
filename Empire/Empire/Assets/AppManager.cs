@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 public class AppManager : MonoBehaviour {
 
     public static AppManager Main;
 
+    public List<LevelData> Levels;
+
     void Awake()
     {
-        
         if (Main == null)
         {
             Main = this;

@@ -137,7 +137,7 @@ public class UIInspectorPanel : MonoBehaviour {
             for (int i = 0; i < myUnit.EquipmentSlots.Count; i++)
             {
                 if (myUnit.EquipmentSlots[i].Instance != null)
-                    StatusText.text += "\n Item: " + myUnit.EquipmentSlots[i].Instance.name;
+                    StatusText.text += "\n Item: " + myUnit.EquipmentSlots[i].Instance.GetName();
             }
             StatusText.text += "\n Salves: " + myUnit.Potions.Count;
         }
@@ -186,7 +186,7 @@ public class UIInspectorPanel : MonoBehaviour {
             {
                 if (upgrade.IsVisible())
                 {
-                    GameObject upgradeButton = createAndParentButton(UpgradePanel, UpgradeButtonTemplate, UpgradeButtons, upgrade.name + " (" + upgrade.Cost + ")");
+                    GameObject upgradeButton = createAndParentButton(UpgradePanel, UpgradeButtonTemplate, UpgradeButtons, upgrade.name + " (" + upgrade.GetCost() + ")");
                     upgradeButton.GetComponent<UIResearchButton>().upgrade = upgrade;
                 }
             }

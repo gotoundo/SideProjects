@@ -42,7 +42,10 @@ public class BasicBuff : MonoBehaviour { //attached to
 	
 	// Update is called once per frame
 	void Update () {
-		TickEffect (false);
+        if (GameManager.Playing)
+        {
+            TickEffect(false);
+        }
 	}
 
 

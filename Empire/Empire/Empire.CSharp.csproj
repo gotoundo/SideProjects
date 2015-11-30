@@ -88,6 +88,7 @@
     <Compile Include="Assets\BasicUpgrade.cs" />
     <Compile Include="Assets\CollisionTestScript.cs" />
     <Compile Include="Assets\GameManager.cs" />
+    <Compile Include="Assets\LevelData.cs" />
     <Compile Include="Assets\PinchZoom.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\Effects\Gradient.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\Effects\NicerOutline.cs" />
@@ -149,7 +150,6 @@
     <Compile Include="Assets\UIBuildUnit.cs" />
     <Compile Include="Assets\UIBuyBounty.cs" />
     <Compile Include="Assets\UIBuyStructure.cs" />
-    <Compile Include="Assets\UIDeselectionObject.cs" />
     <Compile Include="Assets\UIHealthBar.cs" />
     <Compile Include="Assets\UIInspectorPanel.cs" />
     <Compile Include="Assets\UILevelUpStructure.cs" />
@@ -157,8 +157,12 @@
     <Compile Include="Assets\UIPlayerInfo.cs" />
     <Compile Include="Assets\UIResearchButton.cs" />
     <Compile Include="Assets\UIResidentButton.cs" />
+    <Compile Include="Assets\UIScreenDrag.cs" />
     <Compile Include="Assets\UISelectCastleButton.cs" />
+    <Compile Include="Assets\UISelectionMarker.cs" />
     <Compile Include="Assets\UISetScale.cs" />
+    <Compile Include="Assets\UIStartGameButton.cs" />
+    <Compile Include="Assets\UIStoryButton.cs" />
     <Compile Include="Assets\UIToggleDescription.cs" />
   </ItemGroup>
   <ItemGroup>
