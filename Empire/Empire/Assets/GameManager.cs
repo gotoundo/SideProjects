@@ -103,7 +103,6 @@ public class GameManager : MonoBehaviour {
         Main = this;
         AllTeams = new List<Team>();
         AllBounties = new List<BasicBounty>();
-        //MapBounds = new Vector3(400, 0, 400);
     }
 
 	// Use this for initialization
@@ -156,8 +155,18 @@ public class GameManager : MonoBehaviour {
                 nextInspectionTarget = null;
             }
 
+            CameraFixer();    
+
             CheckGameOver();
         }
+    }
+
+    void CameraFixer()
+    {
+        float xPos = Mathf.Clamp(camera.transform.position.x, 0, MapBounds.x);
+        float yPos = Mathf.Clamp(camera.transform.position.y, 20, 200);
+        float zPos = Mathf.Clamp(camera.transform.position.z, 0, MapBounds.z);
+        camera.transform.position = new Vector3(xPos, yPos, zPos);
     }
 
     //GAME COMPLETION LOGIC
