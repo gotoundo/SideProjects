@@ -193,7 +193,7 @@ public class BasicAbility : MonoBehaviour {
 
 	public void StartCasting(BasicUnit target)
 	{
-		Debug.Log ("Casting "+name);
+		//Debug.Log ("Casting "+name);
 		running = true;
 		casting = true;
 		channeling = false;

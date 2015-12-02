@@ -24,7 +24,7 @@ public class UIHealthBar : MonoBehaviour {
         {
             //fill.gameObject.SetActive(!myUnit.Tags.Contains(BasicUnit.Tag.Dead));
             FoWTileInfo tileinfo = FoWManager.FindInstance().GetTileFromWorldPosition(myUnit.transform.position);
-            if (myUnit.HasTag(BasicUnit.Tag.Dead) || tileinfo.IsHidden)
+            if (myUnit.HasTag(BasicUnit.Tag.Dead) || myUnit.HasTag(BasicUnit.Tag.Inside) || tileinfo.IsHidden)
                 transform.localScale = Vector3.zero;
             else
                 transform.localScale = new Vector3(1, 1, 1);
