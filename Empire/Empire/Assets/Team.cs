@@ -154,13 +154,13 @@ public class Team : MonoBehaviour {
     {
         if (CanAffordStructure(StructureTemplate))
         {
-            GameObject NewStucture = (GameObject)Instantiate(StructureTemplate.gameObject, position, StructureTemplate.transform.rotation);
-            NewStucture.GetComponent<BasicUnit>().team = this;
             Gold -= StructureTemplate.ScaledGoldCost();
-            //GameManager.Main.MenuAction();
-            return NewStucture.GetComponent<BasicUnit>();
-            
-            //ModifyMaxBuildableUnits(StructureTemplate, StructureTemplate.MaxSpawns);
+
+            GameObject NewStucture = (GameObject)Instantiate(StructureTemplate.gameObject, position, StructureTemplate.transform.rotation);
+            BasicUnit NewStructureUnit = NewStucture.GetComponent<BasicUnit>();
+            NewStructureUnit.StartBuildingConstruction();
+            NewStructureUnit.team = this;
+            return NewStructureUnit;
         }
         return null;
     }

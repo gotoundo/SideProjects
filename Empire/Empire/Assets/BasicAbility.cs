@@ -5,11 +5,17 @@ using System.Collections.Generic;
 public class BasicAbility : MonoBehaviour {
 
 	public enum Shape {Single,Explosion}
+    public new string name;
 
-	//Specified in Inspector
+	//Targeting
 	public List<BasicUnit.Tag> validTargetTags;
 	public List<BasicUnit.Tag> requiredTargetTags;
 	public List<BasicUnit.Tag> excludedTargetTags;
+    public List<BasicUnit.Tag> initialRequiredTargetTags;
+    public List<BasicUnit.Tag> initialExcludedTargetTags;
+    public int maxLevelTargeted = -1;
+
+    //Base Mechanics
     public List<BasicBuff> immediateBuffsPlaced;
 	public List<BasicBuff> initialBuffsPlaced;
 	public Shape shape;
@@ -20,16 +26,16 @@ public class BasicAbility : MonoBehaviour {
     public bool DrawLine = false;
     public float explosionRadius = 0;
 
+    //Summoning
 	public List<BasicUnit> summonedUnits;
     public int maxSummonedUnits;
     public List<BasicUnit> existingSummonedUnits;
 
+    //Options
 	public bool consumesTargets = false;
 	public bool abilityOnlyHeals = false;
-	List<BasicUnit> targets;
-	public int levelRequired = 0;
-	public Dictionary<BasicUnit,int> structureLevelsRequired;
-
+	
+    //VFX & SFX
     public ParticleSystem CastingVFX;
     public ParticleSystem EffectLaunchSourceVFX;
     public ParticleSystem EffectLandTargetVFX;
@@ -41,28 +47,18 @@ public class BasicAbility : MonoBehaviour {
     public BasicProjectile projectile;
     public float projectileSpeed = 30;
 
-    //learn requirements
-    public bool learnedAtStructure;
+    //Learning Requirements
+    public int levelRequired = 0;
+    //public bool learnedAtStructure;
+    //public Dictionary<BasicUnit,int> structureLevelsRequired;
     public float learnTime;
-    public int minLevelToLearn;
+    public int learnCost;
     public BasicUnit.Stat requiredStat;
     public int requiredStatValue;
+    
 
-
-	BasicUnit Source;
-
-	BasicUnit initialTarget 
-	{ 
-		get
-		{
-			return targets[0]; 
-		}
-	}
-
-	 //summonedUnits
-
-	//Specified by Logic, they should all be private
-	public float remainingCooldown;
+    //Specified by Logic, they should all be private but are public for inspector debugging
+    public float remainingCooldown;
 	public float remainingChannelTime;
 	public float remainingCastTime;
 	public bool running;
@@ -71,7 +67,25 @@ public class BasicAbility : MonoBehaviour {
 	public bool finished;
     public bool nullTarget;
 
-	public bool Running()
+    //Locals
+    BasicUnit Source;
+    List<BasicUnit> targets;
+
+    public bool CanBeLearnedBy(BasicUnit student)
+    {
+        return student.GetStat(requiredStat) >= requiredStatValue && student.Level >= levelRequired;
+    }
+
+    BasicUnit initialTarget
+    {
+        get
+        {
+            return targets[0];
+        }
+    }
+
+
+    public bool Running()
 	{
 		return running;
 	}
@@ -96,7 +110,7 @@ public class BasicAbility : MonoBehaviour {
 
     void PlaySFX(AudioClip clip, BasicUnit target)
     {
-        if(clip!=null)
+        if (clip != null)
         {
             //   AudioSource.PlayClipAtPoint(clip, target.transform.position,5f);
             AssetManager.Main.audioSource.PlayOneShot(clip);
@@ -157,6 +171,9 @@ public class BasicAbility : MonoBehaviour {
         if (summonedUnits.Count>0 && existingSummonedUnits.Count >= maxSummonedUnits)
             return false;
 
+        if(Source.Level < levelRequired)
+            return false;
+
         return remainingCooldown <= 0;
 	}
 
@@ -176,7 +193,7 @@ public class BasicAbility : MonoBehaviour {
 
 	public void StartCasting(BasicUnit target)
 	{
-		//Debug.Log ("StartCasting()");
+		Debug.Log ("Casting "+name);
 		running = true;
 		casting = true;
 		channeling = false;
@@ -257,7 +274,7 @@ public class BasicAbility : MonoBehaviour {
                 for(int i = 0; i<colliders.Length;i++)
                 {
                     BasicUnit possibleUnit = colliders[i].gameObject.GetComponent<BasicUnit>();
-                    if (possibleUnit != null && isValidTarget(possibleUnit))
+                    if (possibleUnit != null && IsValidTarget(possibleUnit, true))
                         validTargets.Add(possibleUnit);
                 }
                 foreach (BasicUnit target in validTargets)
@@ -334,24 +351,46 @@ public class BasicAbility : MonoBehaviour {
 
     //Helpers
 
-	public bool isValidTarget(BasicUnit potentialTarget)
+	public bool IsValidTarget(BasicUnit potentialTarget, bool initialCasting)
 	{
+        if (potentialTarget == null)
+            return false;
+
+        if (potentialTarget.HasTag(BasicUnit.Tag.Inside) && !validTargetTags.Contains(BasicUnit.Tag.Inside))
+            return false;
+
 		bool acceptableTarget = false;
 		
+        //Initial Matching
 		foreach (BasicUnit.Tag tag in validTargetTags)
 			if (potentialTarget.HasTag(tag, Source))
 				acceptableTarget = true;
 		
+        //Required Tags
 		foreach (BasicUnit.Tag tag in requiredTargetTags)
 			if (!potentialTarget.HasTag(tag, Source))
 				acceptableTarget = false;
-		
-		foreach (BasicUnit.Tag tag in excludedTargetTags)
+
+        if(initialCasting)
+            foreach (BasicUnit.Tag tag in initialRequiredTargetTags)
+                if (!potentialTarget.HasTag(tag, Source))
+                    acceptableTarget = false;
+
+        //Excluded Tags
+        foreach (BasicUnit.Tag tag in excludedTargetTags)
 			if (potentialTarget.HasTag(tag, Source))
 				acceptableTarget = false;
-		
-		if (abilityOnlyHeals && potentialTarget.AtMaxHealth())
+
+        if(initialCasting)
+            foreach (BasicUnit.Tag tag in initialExcludedTargetTags)
+                if (potentialTarget.HasTag(tag, Source))
+                    acceptableTarget = false;
+
+        if (abilityOnlyHeals && potentialTarget.AtMaxHealth())
 			acceptableTarget = false;
+
+        if (maxLevelTargeted != -1 && potentialTarget.Level > maxLevelTargeted)
+            acceptableTarget = false;
 
 		return acceptableTarget;
 	}

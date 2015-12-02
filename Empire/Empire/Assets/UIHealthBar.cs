@@ -11,14 +11,12 @@ public class UIHealthBar : MonoBehaviour {
 	void Start () {
         slider = gameObject.GetComponent<Slider>();
         transform.SetParent(GameManager.Main.HealthBarFolder.transform);
-        if (myUnit.HasTag(BasicUnit.Tag.Monster))
-            fill.color = Color.grey;
 	}
 	
 	// Update is called once per frame
 	void Update () {
 
-
+        SetColor();
 
         if (myUnit == null)
             Destroy(gameObject);
@@ -34,8 +32,14 @@ public class UIHealthBar : MonoBehaviour {
             //gameObject.SetActive(!myUnit.Tags.Contains(BasicUnit.Tag.Dead));
             transform.position = Camera.main.WorldToScreenPoint(myUnit.transform.position + new Vector3(0,0, -1));// + new Vector3(0, -myUnit.transform.localScale.y*10, 0
             slider.value = myUnit.getHealthPercentage;
-
-            
         }
 	}
+
+    void SetColor()
+    {
+        if (myUnit.team == GameManager.Main.Player)
+            fill.color = Color.green;
+        else
+            fill.color = Color.grey;
+    }
 }

@@ -10,7 +10,7 @@ public static class Tools
 }
 
 public class BasicBuff : MonoBehaviour { //attached to 
-	public enum Effect {None, Damage, Healing, Stun, Confusion}
+	public enum Effect {None, Damage, Healing, Stun, Convert}
 
 	//Specified in the Inspector
 	public Effect effect = Effect.Damage;
@@ -20,6 +20,10 @@ public class BasicBuff : MonoBehaviour { //attached to
 	public float statPerSecRatio = 0;
 	public float duration = 0; //0 for immediate effects
     public List<BasicUnit.Tag> TemporaryTags;
+    public List<BasicUnit.Tag> TemporaryTagsRemoved;
+    //public bool TeamChange;
+
+    Team origionalTeam;
 
 
 	//Specified when Instantiated by an Ability
@@ -29,7 +33,6 @@ public class BasicBuff : MonoBehaviour { //attached to
 	
 	// Use this for initialization
 	void Start () {
-
 		TickEffect (true);
 	}
 
@@ -51,31 +54,43 @@ public class BasicBuff : MonoBehaviour { //attached to
 
 	void TickEffect(bool firstTurn)
 	{
-        if (firstTurn && TemporaryTags != null)
-            foreach (BasicUnit.Tag tag in TemporaryTags)
-                Target.AddTag(tag);
-
+        if (firstTurn)
+        {
+            if(TemporaryTags != null)
+                foreach (BasicUnit.Tag tag in TemporaryTags)
+                    Target.AddTag(tag);
+            if (TemporaryTagsRemoved != null)
+                foreach (BasicUnit.Tag tag in TemporaryTagsRemoved)
+                    Target.RemoveTag(tag);
+            if (effect == Effect.Convert)
+            {
+                Target.SwitchTeams(Source.team);
+            }
+        }
 
 		float effectPower = totalEffectPower * (firstTurn ? statRatio : statPerSecRatio * Time.deltaTime);
 
-		switch (effect) {
-		case Effect.Damage:
-			if(Source!=null)
-				Source.DealDamage(effectPower,Target);
-			else
-				Target.TakeDamage(effectPower,null);
-			break;
-		case Effect.Healing:
-			if(Source!=null)
-				Source.DealHealing(effectPower,Target);
-			else
-				Target.TakeHealing(effectPower,null);
-			break;
-		default:
-			break;
-		}	
-
-
+        switch (effect)
+        {
+            case Effect.Damage:
+                if (Source != null)
+                    Source.DealDamage(effectPower, Target);
+                else
+                    Target.TakeDamage(effectPower, null);
+                break;
+            case Effect.Healing:
+                if (Source != null)
+                    Source.DealHealing(effectPower, Target);
+                else
+                    Target.TakeHealing(effectPower, null);
+                break;
+            case Effect.Stun:
+                Target.StartStun();
+                break;
+            default:
+                break;
+        }
+        
 		duration = Tools.DecrementTimer (duration);
 		if (duration <= 0)
 			EndBuff ();
@@ -83,10 +98,27 @@ public class BasicBuff : MonoBehaviour { //attached to
 
 	public void EndBuff()
 	{
-        if (Target != null && TemporaryTags != null)
-            foreach (BasicUnit.Tag tag in TemporaryTags)
-                Target.RemoveTag(tag);
-
+        if (Target != null)
+        {
+            if (TemporaryTags != null)
+                foreach (BasicUnit.Tag tag in TemporaryTags)
+                    Target.RemoveTag(tag);
+            if (TemporaryTagsRemoved != null)
+                foreach (BasicUnit.Tag tag in TemporaryTagsRemoved)
+                    Target.AddTag(tag);
+          
+            switch (effect)
+            {
+                case Effect.Stun:
+                    Target.EndStun();
+                    break;
+                case Effect.Convert:
+                    Target.SwitchTeams(origionalTeam);
+                    break;
+                default:
+                    break;
+            }
+        }
 		Destroy (gameObject);
 	}
 

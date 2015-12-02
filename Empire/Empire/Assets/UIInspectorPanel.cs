@@ -123,28 +123,40 @@ public class UIInspectorPanel : MonoBehaviour {
             StatusText.text += "\n" + (int)myUnit.XP + " xp";
             StatusText.text += "\n" + myUnit.currentState.ToString();
         }
-        StatusText.text += "\n" + Mathf.RoundToInt(myUnit.currentHealth) + "/" + myUnit.getMaxHP + " HP";
+        StatusText.text += "\n" + Mathf.RoundToInt(myUnit.currentHealth) + "/" + myUnit.getMaxHealth + " HP";
 
         if (myUnit.HasTag(BasicUnit.Tag.Hero) || myUnit.HasTag(BasicUnit.Tag.Structure))
             StatusText.text += "\n" + myUnit.Gold + " Gold";
 
         if (myUnit.HasTag(BasicUnit.Tag.Hero))
         {
-            StatusText.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Strength) + " Strength";
-            StatusText.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Dexterity) + " Dexterity";
-            StatusText.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Intelligence) + " Intelligence";
+            StatusText.text += "\n" + myUnit.GetStat(BasicUnit.Stat.Strength) + " STR, ";
+            StatusText.text += "" + myUnit.GetStat(BasicUnit.Stat.Dexterity) + " DEX, ";
+            StatusText.text += "" + myUnit.GetStat(BasicUnit.Stat.Intelligence) + " INT";
 
-            for (int i = 0; i < myUnit.EquipmentSlots.Count; i++)
+            foreach (BasicAbility ability in myUnit.Abilities)
             {
-                if (myUnit.EquipmentSlots[i].Instance != null)
-                    StatusText.text += "\n Item: " + myUnit.EquipmentSlots[i].Instance.GetName();
+                if (ability != null && myUnit.Level >= ability.levelRequired)
+                    StatusText.text += "\n Ability: " + ability.name;
             }
+
+            foreach (BasicItem item in myUnit.AllItems)
+            {
+                if (item != null)
+                    StatusText.text += "\n Item: " + item.GetName();
+            }
+
             StatusText.text += "\n Salves: " + myUnit.Potions.Count;
         }
 
         if (myUnit.maxHirelings > 0)
         {
             HireTitle.text = "Hire Units - " + myUnit.GetHiredHeroes().Count + "/" + myUnit.maxHirelings;
+        }
+
+        if(myUnit.beingConstructed)
+        {
+            StatusText.text += "\n Building under construction by workers.";
         }
     }
 
@@ -171,7 +183,7 @@ public class UIInspectorPanel : MonoBehaviour {
         foreach (GameObject panel in Panels)
             panel.SetActive(false);
 
-        if (inspectedUnit.team == GameManager.Main.Player)
+        if (inspectedUnit.team == GameManager.Main.Player && !inspectedUnit.beingConstructed)
         {
             foreach (BasicUnit.UnitSpawner spawner in inspectedUnit.Spawners)
             {

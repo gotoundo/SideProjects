@@ -9,12 +9,15 @@ public class BasicItem : MonoBehaviour
     new public string name;
     public Image icon;
     public enum ItemType { Claws, Shield, LightArmor,HeavyArmor, Potion, Rifle, RPG, Pistol, Flamethrower, HealingDevice,Shotgun,
-    ArchitectTool,AvatarWeapon,Fists, NaturalWeapon,StasisWeapon}
+    ArchitectTool,AvatarWeapon,Fists, NaturalWeapon,StasisWeapon,UnslottedUnique}
     public ItemType Type;
     public int Level;
     public int Cost;
-	public bool Consumable = false;
-    public int EnchantmentLevel;
+	public int EnchantmentLevel;
+
+    public BasicAbility Ability;
+    public bool Consumable = false;
+    public int Quantity = 1;
     //public string EnchantmentString;
 
     public static List<ItemType> EnchantableWeaponTypes = new List<ItemType>(new ItemType[] { ItemType.Claws,ItemType.Rifle,ItemType.RPG,ItemType.Pistol,ItemType.Flamethrower,ItemType.HealingDevice,ItemType.Shotgun,ItemType.Fists,ItemType.NaturalWeapon,ItemType.StasisWeapon });

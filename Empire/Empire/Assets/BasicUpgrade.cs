@@ -2,14 +2,16 @@
 using System.Collections.Generic;
 
 //Do not instantiate
+//but why though???
 public class BasicUpgrade : MonoBehaviour {
     public enum ID { ForgeWeapons1,ForgeWeapons2,ForgeWeapons3,Base1,Base2,Base3,BazaarHealingPotion, ForgeArmor1, ForgeArmor2,ForgeArmor3,
-    WeaponEnchantment1,WeaponEnchantment2,WeaponEnchantment3,ArmorEnchantment1,ArmorEnchantment2,ArmorEnchantment3}
+    WeaponEnchantment1,WeaponEnchantment2,WeaponEnchantment3,ArmorEnchantment1,ArmorEnchantment2,ArmorEnchantment3, ProficiencyImplant}
     new public string name;
     public ID id;
     public int Cost;
     public float ResearchTime;
     public List<BasicItem> ItemsUnlockedForSale;
+    public List<BasicAbility> AbilitiesUnlockedForSale;
     public List<ID> UpgradesRequired;
     public int RequiredBuildingLevel;
     public bool Researching = false;
