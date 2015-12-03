@@ -6,25 +6,26 @@ using UnityEngine.EventSystems;
 using System.Linq;
 
 
-public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, IScrollHandler{
+public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScrollHandler
+{
     public bool debugMode = false;
 
     public string templateID;
     public string templateDescription;
     new public string name;
-   
-    //Enumerations
-    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed, Enemy, Ally, Neutral, Inside}
-    public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, GoingShopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned, ExploreBounty,KillBounty,DefendBounty, Browsing } //the probabilities of which state results after "Deciding" is determined per class
-	public enum Stat{ Strength, Dexterity, Intelligence, Special, Sensitivity}
-	public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxEnergy, ManaRegen, Resistance}
 
-    List<State> passiveStates = new List<State>( new State[] { State.Exploring, State.ExploreBounty, State.GoingShopping, State.GoingHome }); // these can be interrupted
-    List<State> disabledStates = new List<State>(new State[] { State.Stunned}); // these can be interrupted
+    //Enumerations
+    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed, Enemy, Ally, Neutral, Inside }
+    public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, GoingShopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned, ExploreBounty, KillBounty, DefendBounty, Browsing } //the probabilities of which state results after "Deciding" is determined per class
+    public enum Stat { Strength, Dexterity, Intelligence, Special, Sensitivity }
+    public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxEnergy, ManaRegen, Resistance }
+
+    List<State> passiveStates = new List<State>(new State[] { State.Exploring, State.ExploreBounty, State.GoingShopping, State.GoingHome }); // these can be interrupted
+    List<State> disabledStates = new List<State>(new State[] { State.Stunned }); // these can be interrupted
 
     //Attributes and Stats
     Dictionary<Attribute, float> baseAttributes;
-	Dictionary<Stat, float> baseStats;
+    Dictionary<Stat, float> baseStats;
 
     [System.Serializable]
     public class StatBlock
@@ -45,32 +46,32 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     public bool usesEnergy = false;
 
     void initializeStatsAndAttributes()
-	{
-		baseStats = new Dictionary<Stat, float> ();
-		baseStats.Add (Stat.Strength, statBlock.initialStrength);
-		baseStats.Add (Stat.Intelligence, statBlock.initialIntelligence);
-		baseStats.Add (Stat.Dexterity, statBlock.initialDexterity);
-		baseStats.Add (Stat.Special, statBlock.initialSpecial);
+    {
+        baseStats = new Dictionary<Stat, float>();
+        baseStats.Add(Stat.Strength, statBlock.initialStrength);
+        baseStats.Add(Stat.Intelligence, statBlock.initialIntelligence);
+        baseStats.Add(Stat.Dexterity, statBlock.initialDexterity);
+        baseStats.Add(Stat.Special, statBlock.initialSpecial);
         baseStats.Add(Stat.Sensitivity, statBlock.initialSensitivity);
 
-		baseAttributes = new Dictionary<Attribute, float> ();
-		baseAttributes.Add (Attribute.AttackSpeed, 0);
-		baseAttributes.Add (Attribute.HealthRegen, 0);
-		baseAttributes.Add (Attribute.MagicDamage, 0);
-		baseAttributes.Add (Attribute.ManaRegen, 0);
-		baseAttributes.Add (Attribute.MaxHealth, 0);
-		baseAttributes.Add (Attribute.MaxEnergy, 0);
-		baseAttributes.Add (Attribute.MoveSpeed, agent?agent.speed:0);
-		baseAttributes.Add (Attribute.None, 0);
-		baseAttributes.Add (Attribute.PhysicalDamage, 0);
+        baseAttributes = new Dictionary<Attribute, float>();
+        baseAttributes.Add(Attribute.AttackSpeed, 0);
+        baseAttributes.Add(Attribute.HealthRegen, 0);
+        baseAttributes.Add(Attribute.MagicDamage, 0);
+        baseAttributes.Add(Attribute.ManaRegen, 0);
+        baseAttributes.Add(Attribute.MaxHealth, 0);
+        baseAttributes.Add(Attribute.MaxEnergy, 0);
+        baseAttributes.Add(Attribute.MoveSpeed, agent ? agent.speed : 0);
+        baseAttributes.Add(Attribute.None, 0);
+        baseAttributes.Add(Attribute.PhysicalDamage, 0);
         baseAttributes.Add(Attribute.Resistance, 0);
     }
 
-	public int GetStat(Stat stat) //stat mods are added or subtracted
-	{
-		float baseStat = baseStats [stat];
+    public int GetStat(Stat stat) //stat mods are added or subtracted
+    {
+        float baseStat = baseStats[stat];
 
-        foreach(BasicItem item in AllItems)
+        foreach (BasicItem item in AllItems)
         {
             if (item != null)
             {
@@ -79,13 +80,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                         baseStat += item.StatEffects[j].value + item.EnchantmentLevel;
             }
         }
-		return Mathf.RoundToInt(baseStat);
-	}
+        return Mathf.RoundToInt(baseStat);
+    }
 
-	public float GetAttribute(Attribute attribute) //attribute modifiers are added or subtracted
+    public float GetAttribute(Attribute attribute) //attribute modifiers are added or subtracted
     {
-		float baseAttribute = baseAttributes [attribute];
-		
+        float baseAttribute = baseAttributes[attribute];
+
         foreach (BasicItem item in AllItems)
         {
             if (item != null)
@@ -95,14 +96,14 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                         baseAttribute += item.AttributeEffects[j].value + item.EnchantmentLevel;
             }
         }
-		return baseAttribute;
-	}
+        return baseAttribute;
+    }
 
     public float getMaxEnergy { get { return Mathf.RoundToInt(GetStat(Stat.Intelligence) * 5f) + GetAttribute(Attribute.MaxEnergy); } }
     public float getEnergyRegen { get { return Mathf.RoundToInt(GetStat(Stat.Intelligence) * .5f); } }
     public float getMaxHealth { get { return Mathf.RoundToInt(GetStat(Stat.Strength) * 10f) + GetAttribute(Attribute.MaxHealth); } }
-    
-    public float getHealthPercentage {  get { return currentHealth / getMaxHealth; } }
+
+    public float getHealthPercentage { get { return currentHealth / getMaxHealth; } }
 
     //RPG Progression
     public int Gold;
@@ -116,7 +117,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     public float currentEnergy;
     public float currentHealth;
     public List<BasicAbility> Abilities;
-	BasicAbility currentAbility;
+    BasicAbility currentAbility;
 
     [System.Serializable]
     public class EquipmentSlot
@@ -130,7 +131,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     public List<BasicItem> ProductsSold;
     public List<BasicAbility> AbilitiesSold;
     public List<EquipmentSlot> EquipmentSlots;
-    public List<BasicItem> UniqueItems; 
+    public List<BasicItem> UniqueItems;
     public List<BasicItem> Potions;
     public float costScaling = 0f;
     public float researchTimeReduction = 0f;
@@ -149,12 +150,12 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
             return items;
         }
     }
-    
+
 
     public List<BasicItem.Enchantment> ItemEnchantmentsSold;
 
-    
-    
+
+
     //Building Progression
     public List<BasicUpgrade> AvailableUpgrades;
     public List<BasicUpgrade.ID> ResearchedUpgrades;
@@ -182,7 +183,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     //Core Identifications
     public List<Tag> Tags;
     public State currentState;
-    
+    public BasicMotivations Motivations;
+
     //Components
     Animator animator;
     NavMeshAgent agent;
@@ -208,8 +210,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     float storeSearchRadius = 1000f;
     float deathGiftRadius = 15f;
     public float cryForHelpRadius = 10f;
-	public float exploreRadius = 50f;
-	public bool tetheredToHome = false;
+    public float exploreRadius = 50f;
+    public bool tetheredToHome = false;
 
     //Hiring and Spawning
     [System.Serializable]
@@ -232,7 +234,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
             this.spawningUnit = spawningUnit;
             hiring = false;
         }
-        
+
         public void Update()
         {
             if (GameManager.Playing)
@@ -252,7 +254,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                 }
             }
         }
-        
+
         public bool CanSpawn()
         {
             if (canBeHired && spawningUnit.hiring)
@@ -265,7 +267,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                 return false;
 
             bool hirePermission = true;
-            if(canBeHired)
+            if (canBeHired)
             {
                 if (spawningUnit.AllSpawns.Count() >= spawningUnit.maxHirelings)
                     hirePermission = false;
@@ -311,7 +313,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     public List<BasicUnit> GetHiredHeroes()
     {
         List<BasicUnit> heroes = new List<BasicUnit>();
-        foreach(GameObject unitObject in AllSpawns)
+        foreach (GameObject unitObject in AllSpawns)
         {
             if (unitObject != null && unitObject.GetComponent<BasicUnit>() != null && unitObject.GetComponent<BasicUnit>().HasTag(Tag.Hero))
                 heroes.Add(unitObject.GetComponent<BasicUnit>());
@@ -343,33 +345,37 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
     //Timers - make private
     public float corpseDuration = 0;
-     float remainingCorpseDuration;
-     float remainingDecideTime; //not implemented yet
-     float timeSinceLastDamage;
-     float remainingShoppingTime;
-     float remainingGoldTickTime;
+    float remainingCorpseDuration;
+    const float decideTime = 1f;
+    float remainingDecideTime;
+    const float shoppingTime = 2f;
+    float remainingShoppingTime;
+    const float exploringTime = 6f;
+    public float remainingExploringTime;
+    const float goldTickCooldown = 10f;
+    float remainingGoldTickTime;
+    float timeSinceLastDamage;
 
     //animation
     public string AttackAnimation;
 
     //Other constants
-    const float stoppingDistanceMargin = .5f;
     const float sleepRegeneratePercentage = .02f;
     const float fleeHealthPercentage = 0.33f;
     const float goHomeHealthPercentage = 0.8f;
     const float guildTaxRate = 0.3f;
-    const float decideTime = 1f;
-    const float shoppingTime = 2f;
     const float healingPotionPower = 20f;
     const int maxPotions = 5;
     const float maxHuntingDistance = 30f;
     const float levelUpHealAmount = 0.25f;
-    const float goldTickCooldown = 10f;
     const float normalUnitCorpseDuration = 10f;
     const float runningSpeedThreshhold = 0.05f;
+    const float stoppingDistanceMargin = 0.5f;
     const float defaultStoppingDistance = 2f;
-    const float enterBuildingStoppingDistance = 0.5f;
+    const float enterBuildingStoppingDistance = 1f;
+    const float exploreStoppingDistance = 2f;
     const float startingStructureHealthPercent = 0.05f;
+
     // Use this for initialization
     void Awake()
     {
@@ -379,6 +385,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         lineRenderer = GetComponent<LineRenderer>();
         renderer = GetComponent<Renderer>();
         AllSpawns = new List<GameObject>();
+        ProductsSold = ProductsSold ?? new List<BasicItem>();
         Tags = Tags ?? new List<Tag>();
         Abilities = Abilities ?? new List<BasicAbility>();
         ItemEnchantmentsSold = ItemEnchantmentsSold ?? new List<BasicItem.Enchantment>();
@@ -407,7 +414,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
             animator.SetBool(AttackAnimation, true);
     }
 
-    void Start () {
+    void Start()
+    {
         for (int i = 0; i < Abilities.Count; i++)
         {
             {
@@ -415,7 +423,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                 Abilities[i].gameObject.transform.SetParent(transform);
             }
         }
-        
+
 
         foreach (UnitSpawner spawner in Spawners)
             spawner.Initialize(this);
@@ -423,10 +431,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         if (team == null && Tags.Contains(Tag.Imperial))
             team = GameManager.Main.Player;
 
-        if(team!=null && !team.HasUnit(this))
+        if (team != null && !team.HasUnit(this))
             team.AddUnit(this);
 
-        if(team!=null)
+        if (team != null)
         {
             team.structureCostMultiplier -= structureCostReduction;
             team.researchTimeMultiplier -= researchTimeReduction;
@@ -451,9 +459,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         if (name == null || name.Length == 0)
             name = templateID;
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update()
+    {
         if (GameManager.Playing)
         {
             timeSinceLastDamage += Time.deltaTime;
@@ -492,7 +501,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                     break;
                 case State.Stunned:
                     //nothing I guess?
-                break;
+                    break;
                 default:
                     break;
             }
@@ -505,18 +514,23 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
             CleanUp();
         }
-	}
+    }
 
-    void SetNewState(State newState, string reason = "")
+    void SetNewState(State newState, string reason = "", bool clearTargets = true)
     {
         if (debugMode)
-            Debug.Log(((int)GameManager.Main.playTime) + " | " + gameObject.name + " started " + newState.ToString() +": "+reason);
+            Debug.Log(((int)GameManager.Main.playTime) + " | " + gameObject.name + " started " + newState.ToString() + ": " + reason);
+
+        if (clearTargets)
+        {
+            MoveTarget = null;
+            ExploreTarget = Vector3.zero;
+        }
 
         if (currentAbility != null)
             InterruptAbility();
-        MoveTarget = null;
+
         currentAbility = null;
-        ExploreTarget = Vector3.zero;
         currentState = newState;
     }
 
@@ -524,16 +538,16 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     {
         if (currentState == State.Exploring)
             return Vector3.Distance(transform.position, ExploreTarget) < agent.stoppingDistance + stoppingDistanceMargin;
-        return isWithinRange(MoveTarget, agent.stoppingDistance + stoppingDistanceMargin);
+        return IsWithinRange(MoveTarget, agent.stoppingDistance + stoppingDistanceMargin);
     }
 
     void CleanUp()
     {
         remainingGoldTickTime = Mathf.Max(0, remainingGoldTickTime - Time.deltaTime);
-        if(remainingGoldTickTime == 0)
+        if (remainingGoldTickTime == 0)
         {
             remainingGoldTickTime = goldTickCooldown;
-            GainGold(GoldPerTick,false);
+            GainGold(GoldPerTick, false);
         }
 
         if (currentHealth <= 0 && currentState != State.Dead)
@@ -550,9 +564,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                 GameManager.Main.PossibleOptionsChange(this);
             }
         }
-        
+
         //Move Towards Target's new position
-        if (agent != null && agent.isActiveAndEnabled)
+        if (agent != null && agent.isActiveAndEnabled && !HasTag(Tag.Inside))
         {
             if (MoveTarget != null)
                 agent.SetDestination(MoveTarget.transform.position);
@@ -560,7 +574,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                 agent.SetDestination(transform.position);
         }
 
-        if(!HasTag(Tag.Dead) && usesEnergy)
+        if (!HasTag(Tag.Dead) && usesEnergy)
         {
             GainEnergy(getEnergyRegen * Time.deltaTime);
         }
@@ -602,7 +616,61 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         {
             StopDeciding();
 
-            float RandomSelection = Random.Range(0, 100);
+            State proposedState = Motivations.CalculateState(this);
+
+            switch (proposedState)
+            {
+                case State.None:
+                    break;
+                case State.Deciding:
+                    break;
+                case State.Exploring:
+                    StartExploring();
+                    break;
+                case State.Hunting:
+                    StartHunting();
+                    break;
+                case State.InCombat:
+                    break;
+                case State.Following:
+                    break;
+                case State.GoingShopping:
+                    if (FindStore())
+                        StartShopping();
+                    break;
+                case State.GoingHome:
+                    StartGoingHome();
+                    break;
+                case State.Fleeing:
+                    StartFleeing();
+                    break;
+                case State.Relaxing:
+                    break;
+                case State.Sleeping:
+                    break;
+                case State.Dead:
+                    break;
+                case State.Structure:
+                    break;
+                case State.Stunned:
+                    break;
+                case State.ExploreBounty:
+                    if (PickBounty()) // this hideous logic will need to be reworked once we have other bounty types
+                        StartExploreBounty();
+                    else
+                        EndBounty();
+                    break;
+                case State.KillBounty:
+                    break;
+                case State.DefendBounty:
+                    break;
+                case State.Browsing:
+                    break;
+                default:
+                    break;
+            }
+
+            /*float RandomSelection = Random.Range(0, 100);
 
             if (Home != null && ShouldIFlee() && Tags.Contains(Tag.Hero))
                 StartFleeing();
@@ -620,20 +688,20 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                     EndBounty();
             }
             else
-                StartExploring();
+                StartExploring();*/
         }
 
     }
 
     void StopDeciding()
     {
-        if(agent!=null)
+        if (agent != null)
             agent.Resume();
     }
 
 
     //DEBUFF - STUN
-    
+
     public void StartStun()
     {
         SetNewState(State.Stunned);
@@ -646,8 +714,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
 
     //GOING HOME
-    void StartGoingHome() {
-        agent.stoppingDistance = 1;
+    void StartGoingHome()
+    {
+        agent.stoppingDistance = enterBuildingStoppingDistance;
         SetNewState(State.GoingHome);
     }
     void GoingHomeLogic()
@@ -655,14 +724,14 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         MoveTarget = Home;
         GameObject sleepingLocation = MoveTarget;
         if (MoveTarget == null)
-            StopFleeing();
+            StopGoingHome();
         else if (WithinActivationRange())
         {
-            StopFleeing();
             StartSleeping(sleepingLocation);
         }
     }
-    void StopGoingHome() {
+    void StopGoingHome()
+    {
         SetNewState(State.Deciding);
     }
 
@@ -686,13 +755,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     }
     void StopFleeing()
     {
-        SetNewState(State.Deciding);
+        SetNewState(State.Deciding, "Got to safety",false);
     }
 
     //SLEEPING - WHEN SLEEPING, YOU GRADUALLY HEAL
-    void StartSleeping(GameObject sleepLocation = null) {
-
-        if (sleepLocation != null && !Tags.Contains(Tag.Monster))
+    void StartSleeping(GameObject sleepLocation = null)
+    {
+        if (sleepLocation != null)
         {
             EnterStructure(sleepLocation.GetComponent<BasicUnit>());
             if (Home != null && sleepLocation.GetInstanceID() == Home.GetInstanceID())
@@ -703,19 +772,21 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         }
         SetNewState(State.Sleeping);
     }
-    void SleepLogic() {
+    void SleepLogic()
+    {
         DealHealing(sleepRegeneratePercentage * getMaxHealth * Time.deltaTime, this);
         if (currentHealth >= getMaxHealth)
             StopSleeping();
     }
-    void StopSleeping() {
+    void StopSleeping()
+    {
         if (structureOccupied != null)
             LeaveStructure();
 
         SetNewState(State.Deciding);
     }
-    
-   
+
+
 
     bool HasHealingPotions()
     {
@@ -725,7 +796,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     bool PickBounty()
     {
         bool success = false;
-        if(GameManager.Main.AllBounties.Count > 0)
+        if (GameManager.Main.AllBounties.Count > 0)
         {
             LastPickedBounty = GameManager.Main.AllBounties[Random.Range(0, GameManager.Main.AllBounties.Count - 1)];
             MoveTarget = LastPickedBounty.gameObject;
@@ -764,25 +835,36 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
     //EXPLORING
 
-	void StartExploring()
-	{
+    void StartExploring()
+    {
         SetNewState(State.Exploring);
-	}
+        remainingExploringTime = exploringTime;
+    }
 
     void ExploreLogic()
     {
-        agent.stoppingDistance = defaultStoppingDistance;
+        agent.stoppingDistance = exploreStoppingDistance;
 
-        if(!agent.pathPending)
+        
+
+        if (!agent.pathPending)
         {
-            if(ExploreTarget == Vector3.zero || !agent.hasPath)
+            if (ExploreTarget == Vector3.zero || !agent.hasPath)
             {
-                RandomNavmeshPoint(transform.position, exploreRadius, out ExploreTarget);
+                if(tetheredToHome && Home!=null)
+                    RandomNavmeshPoint(Home.transform.position, exploreRadius, out ExploreTarget);
+                else
+                    RandomNavmeshPoint(transform.position, exploreRadius, out ExploreTarget);
+
                 agent.SetDestination(ExploreTarget);
             }
             else if (WithinActivationRange())
                 StopExploring();
         }
+
+        remainingExploringTime -= Time.deltaTime;
+        if (remainingExploringTime <= 0)
+            StopExploring();
 
     }
 
@@ -806,7 +888,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     {
         SetNewState(State.Deciding);
     }
-    
+
 
     //SHOPPING
 
@@ -836,15 +918,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     //Browsing
     void StartBrowsing()
     {
-        SetNewState(State.Browsing);
+        EnterStructure(MoveTargetUnit);
+        SetNewState(State.Browsing, "Reached shop", false);
         remainingShoppingTime = shoppingTime;
     }
 
     void BrowsingLogic()
     {
-        if (structureOccupied == null && MoveTarget != null)
-            EnterStructure(MoveTargetUnit);
-        
         remainingShoppingTime -= Time.deltaTime;
         if (remainingShoppingTime <= 0)
         {
@@ -875,7 +955,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         List<BasicUnit> acceptableTargets = new List<BasicUnit>();
         foreach (BasicUnit encounteredUnit in initialTargets)
             if (encounteredUnit.Tags.Contains(Tag.Store) && encounteredUnit.team == team)
-                if (ItemsICanAffordAtStore(encounteredUnit).Count > 0 || EnchantmentsICanAffordAtStore(encounteredUnit).Count > 0)
+                if (ItemsICanAffordAtStore(encounteredUnit).Count > 0 || EnchantmentsICanAffordAtStore(encounteredUnit).Count > 0 || AbilitiesICanAffordAtStore(encounteredUnit).Count>0)
                     acceptableTargets.Add(encounteredUnit);
 
         if (acceptableTargets.Count > 0)
@@ -885,8 +965,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
     List<BasicItem> ItemsICanAffordAtStore(BasicUnit store)
     {
-        List<BasicItem> desiredItems = new List<BasicItem>(); 
-        int productCount = new List<BasicItem>(store.ProductsSold).Count; //if you put this in the for loop it fucking explodes
+        if (store == null)
+            Debug.Log("Accessing null store!");
+        List<BasicItem> desiredItems = new List<BasicItem>();
+        int productCount = store.ProductsSold.Count; //if you put this in the for loop it fucking explodes
         for (int product = 0; product < productCount; product++)
         {
             BasicItem soldItem = store.ProductsSold[product];
@@ -980,9 +1062,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
             {
                 if (EquipmentSlots[i].Type == soldItem.Type)
                 {
-                    EquipmentSlots[i].Instance = Instantiate(soldItem.gameObject).GetComponent<BasicItem>();
+                    EquipmentSlots[i].Instance = ((GameObject)Instantiate(soldItem.gameObject, transform.position, transform.rotation)).GetComponent<BasicItem>();
                     EquipmentSlots[i].Instance.gameObject.transform.SetParent(transform);
-                    EquipmentSlots[i].Instance.gameObject.transform.localPosition = Vector3.zero;
                     break;
                 }
             }
@@ -1005,20 +1086,20 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
         foreach (EquipmentSlot slot in EquipmentSlots)
         {
-            if (enchantment.GetEnchantTypes().Contains(slot.Type) && slot.Instance!=null)
+            if (enchantment.GetEnchantTypes().Contains(slot.Type) && slot.Instance != null)
             {
-                if(enchantment.EnchantLevel > slot.Instance.EnchantmentLevel)
+                if (enchantment.EnchantLevel > slot.Instance.EnchantmentLevel)
                 {
                     slot.Instance.EnchantmentLevel = enchantment.EnchantLevel;
-                    Debug.Log(name + " purchased a +" + enchantment.EnchantLevel + " " + slot.Type.ToString() + " enchantment at " + MoveTargetUnit.name+"!");
+                    Debug.Log(name + " purchased a +" + enchantment.EnchantLevel + " " + slot.Type.ToString() + " enchantment at " + MoveTargetUnit.name + "!");
                 }
             }
         }
     }
 
-   
 
-   
+
+
 
 
     void DoneShopping()
@@ -1031,20 +1112,21 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     void StartHunting(BasicUnit optionalTarget = null)
     {
         SetNewState(State.Hunting);
-        if(optionalTarget!=null)
+        if (optionalTarget != null)
             MoveTarget = optionalTarget.gameObject;
     }
 
     void HuntingLogic()
     {
-		if (Abilities.Count == 0) {
+        if (Abilities.Count == 0)
+        {
             if (debugMode)
                 Debug.Log("Stopping Hunting because I have no abilities");
             StopHunting();
-			return;
-		}
-        
-        if(MoveTarget == null) //find unit to focus on
+            return;
+        }
+
+        if (MoveTarget == null) //find unit to focus on
         {
             currentAbility = null;
             List<BasicUnit> acceptableTargets = ChooseAbilityAndFindPossibleTargets();
@@ -1069,35 +1151,35 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
     void StopHunting()
     {
-        InterruptAbility ();
+        InterruptAbility();
         SetNewState(State.Deciding);
-	}
+    }
 
     List<BasicUnit> sortByDistance(List<BasicUnit> PotentialTargets)
     {
-        return PotentialTargets.OrderBy(o => Vector3.Distance(o.transform.position,transform.position)).ToList();
+        return PotentialTargets.OrderBy(o => Vector3.Distance(o.transform.position, transform.position)).ToList();
     }
 
 
-	public void DealDamage(float damage, BasicUnit Target)
-	{
-		Target.TakeDamage (damage, this);
-	}
+    public void DealDamage(float damage, BasicUnit Target)
+    {
+        Target.TakeDamage(damage, this);
+    }
 
-	public void DealHealing(float healing, BasicUnit Target)
-	{
-		Target.TakeHealing (healing, this);
-	}
+    public void DealHealing(float healing, BasicUnit Target)
+    {
+        Target.TakeHealing(healing, this);
+    }
 
-	void PickAbility(BasicAbility pickedAbility)
-	{
-		currentAbility = pickedAbility;
-		currentAbility.ResetAbility();
+    void PickAbility(BasicAbility pickedAbility)
+    {
+        currentAbility = pickedAbility;
+        currentAbility.ResetAbility();
         agent.stoppingDistance = currentAbility.range - stoppingDistanceMargin;
-	}
+    }
 
-	bool PickAbility()
-	{
+    bool PickAbility()
+    {
         List<BasicAbility> CastableAbilitiesByLevel = CastableAbilities();
         if (CastableAbilitiesByLevel.Count > 0)
         {
@@ -1105,7 +1187,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
             return true;
         }
         return false;
-	}
+    }
 
     List<BasicAbility> CastableAbilities()
     {
@@ -1115,7 +1197,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                 validAbilities.Add(ability);
 
         validAbilities = validAbilities.OrderBy(x => -x.levelRequired).ToList();
-        if(validAbilities.Count>1)
+        if (validAbilities.Count > 1)
         {
             Debug.Log("sorted abilities");
         }
@@ -1135,28 +1217,32 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
                 return;
         }
 
-        if (!currentAbility.IsValidTarget(initialAbilityTarget,false)) {
-            if(debugMode)
+        if (!currentAbility.IsValidTarget(initialAbilityTarget, false))
+        {
+            if (debugMode)
                 Debug.Log("Initial target no longer valid! Cancelling ability use.");
-			InterruptAbility ();
-			return;
-		}
+            InterruptAbility();
+            return;
+        }
 
-		if (isWithinRange (initialAbilityTarget.gameObject, currentAbility.range)) {
+        if (IsWithinRange(initialAbilityTarget.gameObject, currentAbility.range))
+        {
             RotateTowards(initialAbilityTarget.gameObject.transform);
             //Debug.Log ("In range of ability!");
-            if (currentAbility.CanCast() && !currentAbility.running) {
-                currentAbility.StartCasting (initialAbilityTarget);
+            if (currentAbility.CanCast() && !currentAbility.running)
+            {
+                currentAbility.StartCasting(initialAbilityTarget);
                 if (agent)
                     agent.Stop();
             }
-		}
+        }
 
 
-        if (currentAbility.finished) {
+        if (currentAbility.finished)
+        {
             if (agent)
                 agent.Resume();
-		}
+        }
     }
 
 
@@ -1171,7 +1257,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     {
         Vector3 direction = (target.position - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * agent.angularSpeed/100f);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * agent.angularSpeed / 100f);
     }
 
     void InterruptAbility()
@@ -1180,10 +1266,10 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         if (currentAbility != null)
         { // && !currentAbility.finished
             if (debugMode)
-			    Debug.Log ("Ability Interrupted");
-			currentAbility.FinishAbility();
-		}
-		currentAbility = null;
+                Debug.Log("Ability Interrupted");
+            currentAbility.FinishAbility();
+        }
+        currentAbility = null;
         MoveTarget = null;
 
         if (agent)
@@ -1203,7 +1289,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
             foreach (Collider collider in hitColliders)
             {
                 BasicUnit PotentialTarget = collider.gameObject.GetComponent<BasicUnit>();
-                if (potentialAbility.IsValidTarget(PotentialTarget,true))
+                if (potentialAbility.IsValidTarget(PotentialTarget, true))
                     acceptableTargets.Add(PotentialTarget);
             }
             if (acceptableTargets.Count > 0)
@@ -1255,7 +1341,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         currentHealth = Mathf.Clamp(currentHealth + damage, 0, getMaxHealth);
         if (currentHealth >= getMaxHealth && beingConstructed)
             FinishBuildingConstruction();
-        
+
     }
 
     protected void GainEnergy(float energy)
@@ -1273,9 +1359,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         return getHealthPercentage < fleeHealthPercentage;
     }
 
-    protected bool isWithinRange(GameObject potentialTarget, float range)
+    protected bool IsWithinRange(GameObject potentialTarget, float range)
     {
-        RaycastHit[] hitInfo = Physics.RaycastAll(transform.position, potentialTarget.transform.position - transform.position, range);
+        RaycastHit[] hitInfo = Physics.RaycastAll(transform.position, potentialTarget.transform.position - transform.position, range + GetRadius());
         for (int i = 0; i < hitInfo.Length; i++)
         {
             if (hitInfo[i].collider.gameObject.GetInstanceID() == potentialTarget.gameObject.GetInstanceID())
@@ -1299,7 +1385,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
 
-        if(obstacle!=null)
+        if (obstacle != null)
         {
             obstacle.enabled = false;
         }
@@ -1337,7 +1423,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         foreach (Collider col in hitColliders)
         {
             BasicUnit NearbyUnit = col.gameObject.GetComponent<BasicUnit>();
-            if (NearbyUnit != null && !NearbyUnit.Tags.Contains(Tag.Structure) && !NearbyUnit.Tags.Contains(Tag.Dead) && NearbyUnit.team != team )
+            if (NearbyUnit != null && !NearbyUnit.Tags.Contains(Tag.Structure) && !NearbyUnit.Tags.Contains(Tag.Dead) && NearbyUnit.team != team)
                 goldRecipients.Add(col.gameObject.GetComponent<BasicUnit>());
         }
         int initialGold = Gold;
@@ -1351,7 +1437,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
             else
             {
                 int goldGranted = initialGold / goldRecipients.Count;
-                goldRecipients[i].GainGold(goldGranted,true);
+                goldRecipients[i].GainGold(goldGranted, true);
                 Gold -= goldGranted;
             }
         }
@@ -1397,49 +1483,49 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
     void GainXP(float xpAmount)
     {
-       // Debug.Log(gameObject.name + " earned " + xpAmount + " XP");
+        // Debug.Log(gameObject.name + " earned " + xpAmount + " XP");
 
-        XP += xpAmount; 
+        XP += xpAmount;
         int proposedNewLevel = (int)Mathf.Sqrt(XP);
         while (Level < proposedNewLevel)
             LevelUp();
     }
 
-	void LevelUp(bool healOnLevelUp = true) //add visual and sound effects
+    void LevelUp(bool healOnLevelUp = true) //add visual and sound effects
     {
         Level++;
-        if(debugMode)
+        if (debugMode)
             Debug.Log(gameObject.name + " leveled up to " + Level + "!");
         //gameObject.name = (parentObjectName.Length ==0 ? gameObject.name : parentObjectName) + " " + Level;
 
-		baseStats[Stat.Strength] += statBlock.levelUpStrength;
-		baseStats[Stat.Dexterity] += statBlock.levelUpDexterity;
-		baseStats[Stat.Intelligence] += statBlock.levelUpIntelligence;
-		baseStats [Stat.Special] += statBlock.levelUpSpecial;
+        baseStats[Stat.Strength] += statBlock.levelUpStrength;
+        baseStats[Stat.Dexterity] += statBlock.levelUpDexterity;
+        baseStats[Stat.Intelligence] += statBlock.levelUpIntelligence;
+        baseStats[Stat.Special] += statBlock.levelUpSpecial;
         baseStats[Stat.Sensitivity] += statBlock.levelUpSensitivity;
 
         if (healOnLevelUp)
-            TakeHealing(getMaxHealth * levelUpHealAmount,this);
-            
+            TakeHealing(getMaxHealth * levelUpHealAmount, this);
+
     }
 
 
 
-    
-  
+
+
 
     //Crying for Help
 
     void BroadcastCryForHelp(BasicUnit attacker)
     {
         List<BasicUnit> nearbyUnits = GetUnitsWithinRange(cryForHelpRadius);
-        foreach(BasicUnit unit in nearbyUnits)
+        foreach (BasicUnit unit in nearbyUnits)
         {
             if (unit.team == team)
                 unit.HearCryForHelp(this, attacker);
         }
 
-        foreach(GameObject unitObject in AllSpawns)
+        foreach (GameObject unitObject in AllSpawns)
         {
             BasicUnit unit = unitObject.GetComponent<BasicUnit>();
             if (unit.team == team)
@@ -1480,7 +1566,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     //Structure Leveling Up
     public bool AnotherStructureLevelExists()
     {
-        return Level < LevelUnlocks.Count()-1;
+        return Level < LevelUnlocks.Count() - 1;
     }
 
     public bool CanAffordToLevelUpStructure()
@@ -1490,7 +1576,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
     public int LevelUpCost()
     {
-        return LevelUnlocks[Level+1].cost;
+        return LevelUnlocks[Level + 1].cost;
     }
 
     public void LevelUpStucture()
@@ -1532,7 +1618,8 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     //Entering Buildings and Housing Units
 
 
-    Vector3 previousScale = new Vector3(1, 1, 1);
+     Vector3 previousScale = new Vector3(1, 1, 1);
+    //Vector3 previousPosition;
     void EnterStructure(BasicUnit structure)
     {
         structureOccupied = structure;
@@ -1540,10 +1627,17 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
         Tags.Add(Tag.Inside); //Units that have the Inside tag are untargetable by abilities
         agent.enabled = false;
+
+        foreach (MeshRenderer renderer in GetComponentsInChildren<MeshRenderer>())
+            renderer.gameObject.SetActive(false);
+
+        //previousPosition = structure.transform.position;
+
         previousScale = transform.localScale;
 
-        transform.localScale = Vector3.zero;
-        transform.position = structure.transform.position;
+        transform.localScale = new Vector3(0.0001f, 0.0001f, 0.0001f);
+        //transform.position = structure.transform.position;
+        //transform.position += new Vector3(0, -100, 0);
     }
 
     protected void LeaveStructure()
@@ -1554,6 +1648,11 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
         Tags.Remove(Tag.Inside);
         agent.enabled = true;
+
+        foreach (MeshRenderer renderer in GetComponentsInChildren<MeshRenderer>())
+            renderer.gameObject.SetActive(true);
+
+        //transform.position = previousPosition;
         transform.localScale = previousScale;
     }
 
@@ -1568,13 +1667,13 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
     }
 
 
-    
+
 
     //Other Stuff
 
     bool UsePotion()
     {
-        if(Potions.Count>0)
+        if (Potions.Count > 0)
         {
             Debug.Log(gameObject.name + " used healing potion!");
             BasicItem usedPotion = Potions[0];
@@ -1585,7 +1684,7 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
         }
         return false;
     }
-    
+
 
     void OnDestroy()
     {
@@ -1597,9 +1696,9 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
             team.RemoveUnit(this);
         }
 
-        foreach(BasicUnit unit in Occupants)
+        foreach (BasicUnit unit in Occupants)
         {
-            if(unit!=null)
+            if (unit != null)
                 unit.LeaveStructure();
         }
     }
@@ -1670,4 +1769,21 @@ public class BasicUnit : MonoBehaviour,  IPointerClickHandler, IDragHandler, ISc
 
         team = newTeam;
     }
+
+    public float GetRadius()
+    {
+        if (agent)
+            return agent.radius;
+        else
+            return GetComponent<NavMeshObstacle>().radius;
+    }
+
+    public float GetHeight()
+    {
+        if (agent)
+            return agent.height;
+        else
+            return GetComponent<NavMeshObstacle>().height;
+    }
+
 }

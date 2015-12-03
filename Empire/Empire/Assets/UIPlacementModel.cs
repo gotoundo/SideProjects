@@ -39,9 +39,8 @@ public class UIPlacementModel : MonoBehaviour {
 
         collisions = new List<Collider>();
 
-        TempModel = Instantiate(template);
+        TempModel = (GameObject)Instantiate(template, transform.position, template.transform.rotation);
         TempModel.transform.SetParent(transform);
-        TempModel.transform.localPosition = Vector3.zero;
 
         //transform.localScale = template.transform.localScale;
         //transform.rotation = template.transform.rotation;

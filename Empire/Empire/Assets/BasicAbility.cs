@@ -95,9 +95,8 @@ public class BasicAbility : MonoBehaviour {
     {
         if (effect != null)
         {
-            GameObject newEffect = Instantiate(effect.gameObject);
+            GameObject newEffect = (GameObject)Instantiate(effect.gameObject,target.transform.position,target.transform.rotation);
             newEffect.transform.SetParent(target.transform);
-            newEffect.transform.localPosition = new Vector3(0,1,0);
 
             if (effect.simulationSpace == ParticleSystemSimulationSpace.World)
                 newEffect.transform.SetParent(null);
@@ -248,8 +247,7 @@ public class BasicAbility : MonoBehaviour {
 
     void CreateProjectile(BasicUnit targetUnit)
     {
-        GameObject projectileObject = Instantiate(projectile.gameObject);
-        projectileObject.transform.position = transform.position + new Vector3(0,1,0);
+        GameObject projectileObject = (GameObject)Instantiate(projectile.gameObject, transform.position + new Vector3(0,Source.GetHeight()/2,0),Source.transform.rotation);
         BasicProjectile projectileInfo = projectileObject.GetComponent<BasicProjectile>();
         projectileInfo.Initialize(targetUnit, projectileSpeed, this);
     }
