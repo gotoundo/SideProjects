@@ -111,8 +111,16 @@ public class BasicAbility : MonoBehaviour {
     {
         if (clip != null)
         {
-            //   AudioSource.PlayClipAtPoint(clip, target.transform.position,5f);
-            AssetManager.Main.audioSource.PlayOneShot(clip);
+            if(AssetManager.Main.audioSource != null)
+                AssetManager.Main.audioSource.PlayOneShot(clip);
+            else
+            {
+                Debug.Log("Why the fuck is AssetManager's audiosource null??");
+                AudioSource.PlayClipAtPoint(clip, target.transform.position, 5f);
+            }
+            
+
+            
         }
     }
 

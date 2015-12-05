@@ -18,7 +18,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed, Enemy, Ally, Neutral, Inside }
     public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, GoingShopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned, ExploreBounty, KillBounty, DefendBounty, Browsing } //the probabilities of which state results after "Deciding" is determined per class
     public enum Stat { Strength, Dexterity, Intelligence, Special, Sensitivity }
-    public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxEnergy, ManaRegen, Resistance }
+    public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxEnergy, ManaRegen, Armor }
 
     List<State> passiveStates = new List<State>(new State[] { State.Exploring, State.ExploreBounty, State.GoingShopping, State.GoingHome }); // these can be interrupted
     List<State> disabledStates = new List<State>(new State[] { State.Stunned }); // these can be interrupted
@@ -33,7 +33,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         public float initialStrength;
         public float initialDexterity;
         public float initialIntelligence;
-        public float initialSpecial; //used for structure abilities
+        public float initialSpecial; //used for structure and ally abilities
         public float initialSensitivity;
         public float levelUpStrength;
         public float levelUpDexterity;
@@ -64,7 +64,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         baseAttributes.Add(Attribute.MoveSpeed, agent ? agent.speed : 0);
         baseAttributes.Add(Attribute.None, 0);
         baseAttributes.Add(Attribute.PhysicalDamage, 0);
-        baseAttributes.Add(Attribute.Resistance, 0);
+        baseAttributes.Add(Attribute.Armor, 0);
     }
 
     public int GetStat(Stat stat) //stat mods are added or subtracted
@@ -98,12 +98,22 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         }
         return baseAttribute;
     }
-
+    
+    //Derived Statistics
     public float getMaxEnergy { get { return Mathf.RoundToInt(GetStat(Stat.Intelligence) * 5f) + GetAttribute(Attribute.MaxEnergy); } }
     public float getEnergyRegen { get { return Mathf.RoundToInt(GetStat(Stat.Intelligence) * .5f); } }
     public float getMaxHealth { get { return Mathf.RoundToInt(GetStat(Stat.Strength) * 10f) + GetAttribute(Attribute.MaxHealth); } }
 
+    public float getResistKenetic { get { return Mathf.RoundToInt(GetAttribute(Attribute.Armor)); } }
+    public float getResistEnergy { get { return Mathf.RoundToInt(GetStat(Stat.Dexterity)/2 + GetStat(Stat.Intelligence)/2); } }
+    public float getResistPsychic { get { return Mathf.RoundToInt(GetStat(Stat.Intelligence)/2 + GetStat(Stat.Sensitivity)/2); } }
+    
     public float getHealthPercentage { get { return currentHealth / getMaxHealth; } }
+
+    //Personality Features, as percentages
+    public float Loyalty = 0.5f;
+    public float Greed = 0.5f;
+    public float Temperence = 0.5f;
 
     //RPG Progression
     public int Gold;
@@ -202,7 +212,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     BasicBounty BountyTarget { get { return MoveTarget ? MoveTarget.GetComponent<BasicBounty>() : null; } }
     BasicBounty LastPickedBounty;
     public Vector3 ExploreTarget;
-    public float Loyalty = 0.5f;
+    
     // bool spawnedByStructure = false;
 
     //Search Radii
@@ -1161,9 +1171,9 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     }
 
 
-    public void DealDamage(float damage, BasicUnit Target)
+    public void DealDamage(float damage, BasicUnit Target, BasicBuff.Effect effect)
     {
-        Target.TakeDamage(damage, this);
+        Target.TakeDamage(damage, this,effect);
     }
 
     public void DealHealing(float healing, BasicUnit Target)
@@ -1301,16 +1311,22 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         return new List<BasicUnit>();
     }
 
-    public void TakeDamage(float damage, BasicUnit source)
+    public void TakeDamage(float damage, BasicUnit source, BasicBuff.Effect type)
     {
         timeSinceLastDamage = 0;
 
-        if (damage > 1)
-        {
-            damage -= GetAttribute(Attribute.Resistance);
-            damage = Mathf.Max(damage, 1);
-        }
+        //Apply defenses
+        float reduction = 0;
 
+        if (type == BasicBuff.Effect.KineticDamage)
+            reduction = getResistKenetic;
+        else if (type == BasicBuff.Effect.EnergyDamage)
+            reduction = getResistEnergy;
+        else if (type == BasicBuff.Effect.PsychicDamage)
+            reduction = getResistPsychic;
+
+        damage = Mathf.Max(damage * ((100f - reduction * 3) / 100f), 0);
+        
         currentHealth = Mathf.Clamp(currentHealth - damage, 0, getMaxHealth);
 
         if (currentHealth == 0 && Potions.Count > 0)
@@ -1331,8 +1347,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
             else if (MoveTarget != null && (MoveTargetUnit.Tags.Contains(Tag.Structure) || Vector3.Distance(MoveTargetUnit.transform.position, transform.position) > maxHuntingDistance))
                 StartHunting(source);
         }
-
-
+        
         BroadcastCryForHelp(source);
     }
 
@@ -1372,7 +1387,6 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
 
 
     //DEATH
-
     void Die()
     {
         SetNewState(State.Dead);
@@ -1458,8 +1472,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     {
         return currentHealth >= getMaxHealth;
     }
-
-
+    
     //PROGRESSION
 
     void GainGold(int goldAmount, bool taxableIncome)
@@ -1508,14 +1521,8 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
             TakeHealing(getMaxHealth * levelUpHealAmount, this);
 
     }
-
-
-
-
-
-
+    
     //Crying for Help
-
     void BroadcastCryForHelp(BasicUnit attacker)
     {
         List<BasicUnit> nearbyUnits = GetUnitsWithinRange(cryForHelpRadius);
@@ -1670,7 +1677,6 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
 
 
     //Other Stuff
-
     bool UsePotion()
     {
         if (Potions.Count > 0)

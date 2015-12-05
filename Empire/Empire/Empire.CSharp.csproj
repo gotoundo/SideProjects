@@ -151,6 +151,7 @@
     <Compile Include="Assets\UIHealthBar.cs" />
     <Compile Include="Assets\UIInspectorPanel.cs" />
     <Compile Include="Assets\UILevelUpStructure.cs" />
+    <Compile Include="Assets\UIMainMenu.cs" />
     <Compile Include="Assets\UIPlacementModel.cs" />
     <Compile Include="Assets\UIPlayerInfo.cs" />
     <Compile Include="Assets\UIResearchButton.cs" />

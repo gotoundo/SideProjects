@@ -12,13 +12,13 @@ public class BasicUpgrade : MonoBehaviour {
     public float ResearchTime;
     public List<BasicItem> ItemsUnlockedForSale;
     public List<BasicAbility> AbilitiesUnlockedForSale;
+    public List<BasicItem.Enchantment> ItemEnchantments;
     public List<ID> UpgradesRequired;
     public int RequiredBuildingLevel;
     public bool Researching = false;
     bool FinishedResearching = false;
     float remainingResearchTime;
     public bool permanentUpgrade = false;
-    public List<BasicItem.Enchantment> ItemEnchantments;
     public BasicUnit researcher;
     
     public int GetCost()
@@ -68,7 +68,7 @@ public class BasicUpgrade : MonoBehaviour {
         researcher.ResearchedUpgrades.Add(id);
         researcher.ProductsSold.AddRange(ItemsUnlockedForSale);
         researcher.ItemEnchantmentsSold.AddRange(ItemEnchantments);
-
+        researcher.AbilitiesSold.AddRange(AbilitiesUnlockedForSale);
         researcher.team.TeamUpgrades.Add(id);
 
         GameManager.Main.PossibleOptionsChange(researcher);

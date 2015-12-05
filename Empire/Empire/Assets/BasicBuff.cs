@@ -10,7 +10,7 @@ public static class Tools
 }
 
 public class BasicBuff : MonoBehaviour { //attached to 
-	public enum Effect {None, Damage, Healing, Stun, Convert}
+	public enum Effect {None, Damage, Healing, Stun, Convert, KineticDamage,EnergyDamage,PsychicDamage}
 
 	//Specified in the Inspector
 	public Effect effect = Effect.Damage;
@@ -73,10 +73,16 @@ public class BasicBuff : MonoBehaviour { //attached to
         switch (effect)
         {
             case Effect.Damage:
-                if (Source != null)
-                    Source.DealDamage(effectPower, Target);
-                else
-                    Target.TakeDamage(effectPower, null);
+                DealTypedDamage(effectPower, effect);
+                break;
+            case Effect.EnergyDamage:
+                DealTypedDamage(effectPower, effect);
+                break;
+            case Effect.KineticDamage:
+                DealTypedDamage(effectPower, effect);
+                break;
+            case Effect.PsychicDamage:
+                DealTypedDamage(effectPower, effect);
                 break;
             case Effect.Healing:
                 if (Source != null)
@@ -95,6 +101,14 @@ public class BasicBuff : MonoBehaviour { //attached to
 		if (duration <= 0)
 			EndBuff ();
 	}
+
+    void DealTypedDamage(float damage, Effect damageType)
+    {
+        if (Source != null)
+            Source.DealDamage(damage, Target,damageType);
+        else
+            Target.TakeDamage(damage, null, damageType);
+    }
 
 	public void EndBuff()
 	{

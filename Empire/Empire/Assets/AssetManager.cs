@@ -18,7 +18,6 @@ public class AssetManager : MonoBehaviour {
         audioSource.clip = music[0];
         audioSource.loop = true;
         audioSource.Play();
-	
 	}
 	
 	// Update is called once per frame
