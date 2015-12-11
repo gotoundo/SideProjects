@@ -85,6 +85,7 @@
     <Compile Include="Assets\BasicUnit.cs" />
     <Compile Include="Assets\BasicUpgrade.cs" />
     <Compile Include="Assets\CollisionTestScript.cs" />
+    <Compile Include="Assets\DataNameBank.cs" />
     <Compile Include="Assets\GameManager.cs" />
     <Compile Include="Assets\LevelData.cs" />
     <Compile Include="Assets\PinchZoom.cs" />

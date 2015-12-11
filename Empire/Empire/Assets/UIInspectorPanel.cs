@@ -136,7 +136,7 @@ public class UIInspectorPanel : MonoBehaviour {
 
             foreach (BasicAbility ability in myUnit.Abilities)
             {
-                if (ability != null && myUnit.Level >= ability.levelRequired)
+                if (ability != null && ability.Unlocked())
                     StatusText.text += "\n Ability: " + ability.name;
             }
 

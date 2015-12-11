@@ -13,12 +13,13 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     public string templateID;
     public string templateDescription;
     new public string name;
-
+    public DataNameBank nameBank;
+   
     //Enumerations
     public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed, Enemy, Ally, Neutral, Inside }
     public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, GoingShopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned, ExploreBounty, KillBounty, DefendBounty, Browsing } //the probabilities of which state results after "Deciding" is determined per class
     public enum Stat { Strength, Dexterity, Intelligence, Special, Sensitivity }
-    public enum Attribute { None, MaxHealth, PhysicalDamage, MagicDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxEnergy, ManaRegen, Armor }
+    public enum Attribute { None, MaxHealth, KineticDamage, EnergyDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxEnergy, ManaRegen, Armor, PsychicDamage }
 
     List<State> passiveStates = new List<State>(new State[] { State.Exploring, State.ExploreBounty, State.GoingShopping, State.GoingHome }); // these can be interrupted
     List<State> disabledStates = new List<State>(new State[] { State.Stunned }); // these can be interrupted
@@ -57,14 +58,15 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         baseAttributes = new Dictionary<Attribute, float>();
         baseAttributes.Add(Attribute.AttackSpeed, 0);
         baseAttributes.Add(Attribute.HealthRegen, 0);
-        baseAttributes.Add(Attribute.MagicDamage, 0);
+        baseAttributes.Add(Attribute.EnergyDamage, 0);
         baseAttributes.Add(Attribute.ManaRegen, 0);
         baseAttributes.Add(Attribute.MaxHealth, 0);
         baseAttributes.Add(Attribute.MaxEnergy, 0);
         baseAttributes.Add(Attribute.MoveSpeed, agent ? agent.speed : 0);
         baseAttributes.Add(Attribute.None, 0);
-        baseAttributes.Add(Attribute.PhysicalDamage, 0);
+        baseAttributes.Add(Attribute.KineticDamage, 0);
         baseAttributes.Add(Attribute.Armor, 0);
+        baseAttributes.Add(Attribute.PsychicDamage, 0);
     }
 
     public int GetStat(Stat stat) //stat mods are added or subtracted
@@ -464,10 +466,12 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         }
 
         GameObject healthBar = Instantiate(GameManager.Main.HealthBarTemplate);
-        healthBar.GetComponent<UIHealthBar>().myUnit = this;
+        healthBar.GetComponent<UIHealthBar>().Initialize(this);
 
         if (name == null || name.Length == 0)
             name = templateID;
+        if (nameBank != null)
+            name = nameBank.GetRandomName();
     }
 
     // Update is called once per frame
@@ -1335,7 +1339,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         if (passiveStates.Contains(currentState))
         {
             if (!Tags.Contains(Tag.Structure))
-                StartDeciding();
+                StartHunting();
         }
         else if (currentState == State.Hunting)
         {
@@ -1343,6 +1347,11 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
             {
                 StopHunting();
                 StartFleeing();
+            }
+            else if (!WithinActivationRange() && (currentAbility == null || currentAbility.finished || !currentAbility.running))
+            {
+                StopHunting();
+                StartHunting();
             }
             else if (MoveTarget != null && (MoveTargetUnit.Tags.Contains(Tag.Structure) || Vector3.Distance(MoveTargetUnit.transform.position, transform.position) > maxHuntingDistance))
                 StartHunting(source);
@@ -1590,6 +1599,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     {
         team.Gold -= LevelUpCost();
         LevelUp(false);
+        beingConstructed = true;
         GameManager.Main.PossibleOptionsChange(this);
     }
 

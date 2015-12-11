@@ -49,6 +49,13 @@ public class GameManager : MonoBehaviour {
     Vector3 groundCamOffset;
     Vector3 camTarget;
     Vector3 camSmoothDampV;
+    const float PlacementConfirmDistance = 100f;
+    const float DefaultCameraHeight = 40f;
+
+    public float CameraHeightScale()
+    {
+        return DefaultCameraHeight/camera.transform.position.y;
+    }
 
     private Vector3 GetWorldPosAtViewportPoint(float vx, float vy)
     {
@@ -235,23 +242,34 @@ public class GameManager : MonoBehaviour {
 
             placementPosition = new Vector3(placementPosition.x, 1, placementPosition.z);
 
-            if (Input.GetMouseButton(0) && Vector3.Distance(placementPosition, PlacementModel.transform.position) > 1f)
+            Vector3 tappedScreenPoint = camera.WorldToScreenPoint(placementPosition);
+            Vector3 currentScreenPoint = camera.WorldToScreenPoint(PlacementModel.transform.position);
+
+            /*if (Input.GetMouseButtonDown(0))
             {
-                    PlacementModel.transform.position = placementPosition;
+                Debug.Log("Tapped Position: " + tappedScreenPoint);
+                Debug.Log("Last Position: " + currentScreenPoint);
+                Debug.Log("Distance:" + Vector3.Distance(tappedScreenPoint, currentScreenPoint));
+            }*/
+
+            if (Input.GetMouseButton(0) && Vector3.Distance(tappedScreenPoint, currentScreenPoint) > PlacementConfirmDistance)
+            {
+                PlacementModel.transform.position = placementPosition;
             }
             else if (Input.GetMouseButtonDown(0))
             {
-                if (!PlacementModel.GetComponent<UIPlacementModel>().Blocked && Vector3.Distance(placementPosition, PlacementModel.transform.position) < 1f)
+                if (!PlacementModel.GetComponent<UIPlacementModel>().Blocked &&
+                    Vector3.Distance(tappedScreenPoint, currentScreenPoint) <= PlacementConfirmDistance)
                 {//location confirmed, place structure
 
                     BasicUnit placedUnit = null;
                     if (PlacementModel.GetComponent<UIPlacementModel>().currentMode == UIPlacementModel.PlacementMode.Structure)
                     {
-                        placedUnit = Player.PlaceStructure(PlacementTemplate.GetComponent<BasicUnit>(), placementPosition);
+                        placedUnit = Player.PlaceStructure(PlacementTemplate.GetComponent<BasicUnit>(), PlacementModel.transform.position);
                     }
                     else if (PlacementModel.GetComponent<UIPlacementModel>().currentMode == UIPlacementModel.PlacementMode.ExploreBounty)
                     {
-                        Player.PlaceExploreBounty(PlacementTemplate.GetComponent<BasicBounty>(), placementPosition);
+                        Player.PlaceExploreBounty(PlacementTemplate.GetComponent<BasicBounty>(), PlacementModel.transform.position);
                     }
 
                     EndPlacement();
@@ -261,7 +279,7 @@ public class GameManager : MonoBehaviour {
                 }
             }
 
-           
+
         }
     }
 

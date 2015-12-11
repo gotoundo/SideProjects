@@ -175,14 +175,22 @@ public class BasicAbility : MonoBehaviour {
 
 	public bool CanCast()
 	{
-        if (summonedUnits.Count>0 && existingSummonedUnits.Count >= maxSummonedUnits)
-            return false;
-
-        if(Source.Level < levelRequired)
+        if (!Unlocked())
             return false;
 
         return remainingCooldown <= 0;
 	}
+
+    public bool Unlocked()
+    {
+        if (summonedUnits.Count > 0 && existingSummonedUnits.Count >= maxSummonedUnits)
+            return false;
+
+        if (Source.Level < levelRequired)
+            return false;
+
+        return true;
+    }
 
 	public void ResetAbility() //run this when selected
 	{
