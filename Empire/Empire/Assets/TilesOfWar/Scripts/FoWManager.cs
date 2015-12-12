@@ -9,6 +9,14 @@ using UnityEngine;
 [Serializable]
 public class FoWManager : MonoBehaviour
 {
+    //ADAM FIELDS
+
+    public static void ClearSingleton()
+    {
+        _instance = null;
+    }
+
+
     #region INSPECTOR FIELDS
 
     public FoWType FogType = FoWType.Projector;
