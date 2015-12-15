@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace UnityEngine.UI
 {
 	[RequireComponent(typeof(RectTransform)), RequireComponent(typeof(Graphic)), DisallowMultipleComponent, AddComponentMenu("UI/Flippable")]
-#if UNITY_5_2
+#if UNITY_5_2 || UNITY_5_3 || UNITY_5_4 || UNITY_5_5 || UNITY_5_6 || UNITY_5_7 || UNITY_5_8 || UNITY_5_9
     public class UIFlippable : MonoBehaviour, IMeshModifier {
 #else
     public class UIFlippable : MonoBehaviour, IVertexModifier {
@@ -40,7 +40,21 @@ namespace UnityEngine.UI
 		}
 #endif
 
-#if UNITY_5_2
+#if UNITY_5_2 || UNITY_5_3 || UNITY_5_4 || UNITY_5_5 || UNITY_5_6 || UNITY_5_7 || UNITY_5_8 || UNITY_5_9
+        public void ModifyMesh(VertexHelper vertexHelper)
+		{
+			if (!this.enabled)
+				return;
+			
+			List<UIVertex> list = new List<UIVertex>();
+			vertexHelper.GetUIVertexStream(list);
+			
+			ModifyVertices(list);  // calls the old ModifyVertices which was used on pre 5.2
+			
+			vertexHelper.Clear();
+			vertexHelper.AddUIVertexTriangleStream(list);
+		}
+
         public void ModifyMesh(Mesh mesh)
         {
             if (!this.enabled)

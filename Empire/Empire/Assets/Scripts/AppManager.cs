@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
 public class AppManager : MonoBehaviour {
@@ -15,7 +16,12 @@ public class AppManager : MonoBehaviour {
     public static void LoadLevel(LevelData level)
     {
         CurrentLevel = level;
-        Application.LoadLevel(level.SceneID);
+        LoadScene(level.SceneID);
+    }
+
+    public static void LoadScene(string SceneID)
+    {
+        SceneManager.LoadScene(SceneID);
     }
 
     void Awake()

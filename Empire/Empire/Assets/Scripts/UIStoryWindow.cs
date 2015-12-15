@@ -12,6 +12,10 @@ public class UIStoryWindow : MonoBehaviour {
     public void SetStoryFields(LevelData.DialogInfo Info)
     {
         WindowTitle.title = Info.StoryTitle;
+        //WindowTitle.OnValidate();
+        //foreach (Text text in WindowTitle.gameObject.GetComponentsInChildren<Text>())
+        //    text.text = Info.StoryTitle;
+        
         AddressText.text = Info.StoryHonorific;
         MessageText.text = Info.StoryText;
         ConfirmText.text = Info.AcceptText;

@@ -73,8 +73,9 @@ public class SaveData
     {
 #if UNITY_EDITOR
         return true;
-#endif
+#else
         return false;
+#endif
     }
 
     public static void VictoryUnlock(LevelData.LockID id)

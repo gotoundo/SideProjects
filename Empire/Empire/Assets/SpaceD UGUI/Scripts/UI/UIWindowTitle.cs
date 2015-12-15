@@ -13,5 +13,10 @@ namespace UnityEngine.UI
 			foreach (Text text in this.gameObject.GetComponentsInChildren<Text>())
 				text.text = this.title;
 		}
+
+        void Update()
+        {
+            OnValidate();
+        }
 	}
 }

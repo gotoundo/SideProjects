@@ -1,3 +1,57 @@
 Base path: C:/Program Files/Unity/Editor/Data
-Pipe name: \\.\pipe\UnityShaderCompiler-64bit-1-5436
+Pipe name: \\.\pipe\UnityShaderCompiler-64bit-1-3116
 Cmd: getPlatforms
+Cmd: preprocess
+  insize=9127 outsize=1199 ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=6048 outsize=3386 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=6048 outsize=770 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=4595 outsize=4889 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=4595 outsize=770 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: preprocess
+  insize=3692 outsize=898 ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=3095 outsize=7449 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=3095 outsize=770 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: preprocess
+  insize=1636 outsize=616 ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=1319 outsize=1266 kw= pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=1319 outsize=770 kw= pd= ok=1
+Cmd: preprocess
+  insize=2419 outsize=677 ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=2041 outsize=1266 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=2041 outsize=770 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: preprocess
+  insize=709 outsize=706 ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=1706 outsize=1290 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=1706 outsize=868 kw=SOFTPARTICLES_OFF pd= ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=6048 outsize=6287 kw=SOFTPARTICLES_OFF USE_LINE_GLOW pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=6048 outsize=770 kw=SOFTPARTICLES_OFF USE_LINE_GLOW pd= ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=4595 outsize=4889 kw=SOFTPARTICLES_OFF USE_LINE_GLOW pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=4595 outsize=770 kw=SOFTPARTICLES_OFF USE_LINE_GLOW pd= ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=2041 outsize=2013 kw=SOFTPARTICLES_ON pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=2041 outsize=1493 kw=SOFTPARTICLES_ON pd= ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=6048 outsize=7002 kw=SOFTPARTICLES_ON USE_LINE_GLOW pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=6048 outsize=1493 kw=SOFTPARTICLES_ON USE_LINE_GLOW pd= ok=1
+Cmd: compileSnippet
+  api=4 type=0 insize=4595 outsize=5604 kw=SOFTPARTICLES_ON USE_LINE_GLOW pd= ok=1
+Cmd: compileSnippet
+  api=4 type=1 insize=4595 outsize=1493 kw=SOFTPARTICLES_ON USE_LINE_GLOW pd= ok=1

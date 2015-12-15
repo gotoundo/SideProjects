@@ -16,7 +16,7 @@
     <CompilerResponseFile></CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>WebPlayer:6</UnityBuildTarget>
-    <UnityVersion>5.2.1f1</UnityVersion>
+    <UnityVersion>5.3.0f4</UnityVersion>
     <RootNamespace></RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -26,7 +26,7 @@
     <IntermediateOutputPath>Temp\UnityVS_obj\Debug\</IntermediateOutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DefineConstants>DEBUG;TRACE;UNITY_5_2_1;UNITY_5_2;UNITY_5;ENABLE_NEW_BUGREPORTER;ENABLE_2D_PHYSICS;ENABLE_4_6_FEATURES;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITES;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_REFLECTION_BUFFERS;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;UNITY_WEBPLAYER;ENABLE_SUBSTANCE;WEBPLUG;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_MONO;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;UNITY_5_3_0;UNITY_5_3;UNITY_5;ENABLE_NEW_BUGREPORTER;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITERENDERER_FLIPPING;ENABLE_SPRITES;ENABLE_SPRITE_POLYGON;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_EDITOR_METRICS_CACHING;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;ENABLE_EDITOR_TESTS_RUNNER;UNITY_WEBPLAYER;ENABLE_SUBSTANCE;WEBPLUG;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_MONO;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN</DefineConstants>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -36,7 +36,7 @@
     <IntermediateOutputPath>Temp\UnityVS_obj\Release\</IntermediateOutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DefineConstants>TRACE;UNITY_5_2_1;UNITY_5_2;UNITY_5;ENABLE_NEW_BUGREPORTER;ENABLE_2D_PHYSICS;ENABLE_4_6_FEATURES;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITES;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_REFLECTION_BUFFERS;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;UNITY_WEBPLAYER;ENABLE_SUBSTANCE;WEBPLUG;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_MONO;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN</DefineConstants>
+    <DefineConstants>TRACE;UNITY_5_3_0;UNITY_5_3;UNITY_5;ENABLE_NEW_BUGREPORTER;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITERENDERER_FLIPPING;ENABLE_SPRITES;ENABLE_SPRITE_POLYGON;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_EDITOR_METRICS_CACHING;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;ENABLE_EDITOR_TESTS_RUNNER;UNITY_WEBPLAYER;ENABLE_SUBSTANCE;WEBPLUG;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_MONO;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN</DefineConstants>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
@@ -55,11 +55,14 @@
     <Reference Include="UnityEngine.Networking">
       <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.Networking">
+      <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>Library\UnityAssemblies\UnityEngine.UI.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor">
       <HintPath>Library\UnityAssemblies\UnityEditor.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil">
-      <HintPath>Library\UnityAssemblies\Mono.Cecil.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor.iOS.Extensions.Xcode">
       <HintPath>Library\UnityAssemblies\UnityEditor.iOS.Extensions.Xcode.dll</HintPath>
@@ -74,6 +77,45 @@
   <ItemGroup>
     <Compile Include="Assets\3D Resources\SpaceRebel Buildings\FxChimney.cs" />
     <Compile Include="Assets\3D Resources\SpaceRebel Buildings\FxRotator.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DAudioController.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DBeam.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DCurvedBeam.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DDespawn.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DFXController.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DFlameThrower.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DLightning.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DMissile.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DParticleScale.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DPool.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DPredictTrajectory.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DProjectile.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DPulsewave.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DRandomize.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DRift.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DShotgun.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DTime.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DTurret.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DWarpJump.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DWarpJumpTunnel.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\F3DWarpTunnel.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\MeshCombine\CombineChildren.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Code\MeshCombine\MeshCombineUtility.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Examples\Code\F3DBurnoutExample.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Examples\Code\F3DDummyEvent.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Examples\Code\F3DMissileLauncher.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Examples\Code\F3DNebula.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Examples\Code\F3DTrailExample.cs" />
+    <Compile Include="Assets\FORGE3D\Sci-Fi Effects\Examples\Code\F3DTurnTable.cs" />
+    <Compile Include="Assets\ProceduralLightning\Prefab\Scripts\LightningBoltPathScript.cs" />
+    <Compile Include="Assets\ProceduralLightning\Prefab\Scripts\LightningBoltPrefabScript.cs" />
+    <Compile Include="Assets\ProceduralLightning\Prefab\Scripts\LightningBoltScript.cs" />
+    <Compile Include="Assets\ProceduralLightning\Prefab\Scripts\LightningBoltShapeConeScript.cs" />
+    <Compile Include="Assets\ProceduralLightning\Prefab\Scripts\LightningBoltShapeSphereScript.cs" />
+    <Compile Include="Assets\ProceduralLightning\Prefab\Scripts\LightningEditorUtilities.cs" />
+    <Compile Include="Assets\ProceduralLightning\Prefab\Scripts\LightningFieldScript.cs" />
+    <Compile Include="Assets\ProceduralLightning\Prefab\Scripts\LightningGizmoScript.cs" />
+    <Compile Include="Assets\ProceduralLightning\Prefab\Scripts\ThunderAndLightningScript.cs" />
+    <Compile Include="Assets\Scripts\AdamTools.cs" />
     <Compile Include="Assets\Scripts\AppManager.cs" />
     <Compile Include="Assets\Scripts\AssetManager.cs" />
     <Compile Include="Assets\Scripts\BasicAbility.cs" />
@@ -111,6 +153,8 @@
     <Compile Include="Assets\Scripts\UIStoryButton.cs" />
     <Compile Include="Assets\Scripts\UIStoryWindow.cs" />
     <Compile Include="Assets\Scripts\UIToggleDescription.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Demo Scripts\DeskManagement.cs" />
+    <Compile Include="Assets\SpaceD UGUI\Scripts\Demo Scripts\LoadingDemonstration.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\Effects\Gradient.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\Effects\NicerOutline.cs" />
     <Compile Include="Assets\SpaceD UGUI\Scripts\Enums, Structs and Serializables\AnimationTriggersExtended.cs" />
@@ -175,6 +219,29 @@
     <None Include="Assets\3D Resources\SpaceRebel Buildings\readme.txt" />
     <None Include="Assets\3D Resources\White Buildings\BuildingsPack1_shader.shader" />
     <None Include="Assets\3D Resources\White Buildings\DefenseTurret\readme.txt" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\Additive.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\AlphaBlended.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\Billboard.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\Burnout.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\Debris.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\ExhaustFlame.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\Heat.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\Holographic.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\NebulaStaticBoard.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\SmokeTurbulent.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\Surface.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\Trail.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\WarpJump.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\WarpJumpDistortion.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\WarpJumpTwist.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\WarpTunnel.shader" />
+    <None Include="Assets\FORGE3D\Sci-Fi Effects\Shaders\WarpTunnelDistortion.shader" />
+    <None Include="Assets\ProceduralLightning\Prefab\Materials\DarkCloudShader.shader" />
+    <None Include="Assets\ProceduralLightning\Prefab\Materials\LightningBoltShader.shader" />
+    <None Include="Assets\ProceduralLightning\Prefab\Materials\LightningBoltShaderMesh.shader" />
+    <None Include="Assets\ProceduralLightning\Prefab\Materials\LightningBoltShaderMeshNoGlow.shader" />
+    <None Include="Assets\ProceduralLightning\Prefab\Materials\LightningGlowShader.shader" />
+    <None Include="Assets\ProceduralLightning\Readme.txt" />
     <None Include="Assets\SpaceD UGUI\changelog.txt" />
     <None Include="Assets\SpaceD UGUI\readme.txt" />
     <None Include="Assets\Standard Assets\Prototyping\Shaders\WorldCoordDiffuse.shader" />

@@ -15,6 +15,6 @@ public class UIQuitGameButton : MonoBehaviour {
 
     public void Click()
     {
-        Application.LoadLevel("IntroScene");
+        AppManager.LoadScene("IntroScene");;
     }
 }

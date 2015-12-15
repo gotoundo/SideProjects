@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace UnityEngine.UI
 {
 	[AddComponentMenu("UI/Effects/Nicer Outline")]
-#if UNITY_5_2
+#if UNITY_5_2 || UNITY_5_3 || UNITY_5_4 || UNITY_5_5 || UNITY_5_6 || UNITY_5_7 || UNITY_5_8 || UNITY_5_9
     public class NicerOutline : BaseMeshEffect
 #else
 	public class NicerOutline : BaseVertexEffect
@@ -131,29 +131,23 @@ namespace UnityEngine.UI
 			}
 		}
 
-#if UNITY_5_2
-        public override void ModifyMesh(Mesh mesh)
+#if UNITY_5_2 || UNITY_5_3 || UNITY_5_4 || UNITY_5_5 || UNITY_5_6 || UNITY_5_7 || UNITY_5_8 || UNITY_5_9
+        public override void ModifyMesh(VertexHelper vertexHelper)
         {
             if (!this.IsActive())
                 return;
 
             List<UIVertex> list = new List<UIVertex>();
-            using (VertexHelper vertexHelper = new VertexHelper(mesh))
-            {
-                vertexHelper.GetUIVertexStream(list);
-            }
+            vertexHelper.GetUIVertexStream(list);
 
             ModifyVertices(list);  // calls the old ModifyVertices which was used on pre 5.2
 
-            using (VertexHelper vertexHelper2 = new VertexHelper())
-            {
-                vertexHelper2.AddUIVertexTriangleStream(list);
-                vertexHelper2.FillMesh(mesh);
-            }
+			vertexHelper.Clear();
+            vertexHelper.AddUIVertexTriangleStream(list);
         }
 #endif
 
-#if UNITY_5_2
+#if UNITY_5_2 || UNITY_5_3 || UNITY_5_4 || UNITY_5_5 || UNITY_5_6 || UNITY_5_7 || UNITY_5_8 || UNITY_5_9
         public void ModifyVertices(List<UIVertex> verts)
 #else
         public override void ModifyVertices(List<UIVertex> verts)

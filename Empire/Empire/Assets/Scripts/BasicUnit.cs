@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using UnityEngine.EventSystems;
-using System.Linq;
 
 
 public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScrollHandler
@@ -1258,7 +1257,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         {
             RotateTowards(initialAbilityTarget.gameObject.transform);
             //Debug.Log ("In range of ability!");
-            if (currentAbility.CanCast() && !currentAbility.running)
+            if (currentAbility.CanCast() && !currentAbility.Running)
             {
                 currentAbility.StartCasting(initialAbilityTarget);
                 if (agent)
@@ -1267,7 +1266,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         }
 
 
-        if (currentAbility.finished)
+        if (currentAbility.Finished)
         {
             if (agent)
                 agent.Resume();
@@ -1286,7 +1285,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     {
         Vector3 direction = (target.position - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * agent.angularSpeed / 100f);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * agent.angularSpeed / 20f);
     }
 
     void InterruptAbility()
@@ -1307,10 +1306,10 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
 
     List<BasicUnit> ChooseAbilityAndFindPossibleTargets()
     {
-        if (HasTag(Tag.Imperial) && HasTag(Tag.Hero))
+        /*if (HasTag(Tag.Imperial) && HasTag(Tag.Hero))
         {
             string z = "";
-        }
+        }*/
         foreach (BasicAbility potentialAbility in CastableAbilities())
         {
             Collider[] hitColliders = Physics.OverlapSphere(transform.position, huntSearchRadius);
@@ -1363,7 +1362,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
                 StopHunting();
                 StartFleeing();
             }
-            else if (!WithinActivationRange() && (currentAbility == null || currentAbility.finished || !currentAbility.running))
+            else if (!WithinActivationRange() && (currentAbility == null || currentAbility.Finished || !currentAbility.Running))
             {
                 StopHunting();
                 StartHunting();
@@ -1547,7 +1546,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
 
         if(HasTag(Tag.Hero))
         {
-            GameObject levelUpVFX = (GameObject)Instantiate(AssetManager.Main.HeroLevelUpVFX,transform.position,transform.rotation);
+            GameObject levelUpVFX = (GameObject)Instantiate(AssetManager.Main.HeroLevelUpVFX.gameObject,transform.position,transform.rotation);
             levelUpVFX.transform.SetParent(transform);
             Destroy(levelUpVFX, 5f);
         }

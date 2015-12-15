@@ -115,6 +115,13 @@ public class GameManager : MonoBehaviour {
         {
             AppManager.CurrentLevel = AppManager.Main.DemoLevel;
         }
+
+
+    }
+
+    void LoadLevelData(LevelData levelData)
+    {
+        Player.Gold = levelData.StartingGold;
     }
 
     // Use this for initialization
@@ -139,6 +146,7 @@ public class GameManager : MonoBehaviour {
                 AllInitialEnemyStructures.Add(unit);
 
 
+        LoadLevelData(AppManager.CurrentLevel);
         StoryPanelStart(AppManager.CurrentLevel.GameStartDialog, false);
     }
 
@@ -148,6 +156,7 @@ public class GameManager : MonoBehaviour {
         PlayerInfoPanel.SetActive(value);
         ServicesPanel.SetActive(value);
         OptionsButton.SetActive(value);
+        HealthBarFolder.SetActive(value);
     }
 
     // Update is called once per frame

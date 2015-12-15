@@ -15,7 +15,7 @@ namespace UnityEngine.UI
 			Outline
 		}
 		
-		new public enum Transition
+		public enum Transition
 		{
 			None,
 			ColorTint

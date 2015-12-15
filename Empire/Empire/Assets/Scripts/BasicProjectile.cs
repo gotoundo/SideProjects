@@ -5,12 +5,13 @@ public class BasicProjectile : MonoBehaviour {
     BasicUnit Target;
     float Speed = 10f;
     BasicAbility Ability;
+    public float maxLifetime = 5f;
     
 
 	// Use this for initialization
 	void Start () {
-        Destroy(gameObject, GetComponent<ParticleSystem>().duration);
-	}
+        Destroy(gameObject, maxLifetime); //GetComponent<ParticleSystem>().duration
+    }
 
     public void Initialize(BasicUnit Target, float Speed, BasicAbility Ability)
     {

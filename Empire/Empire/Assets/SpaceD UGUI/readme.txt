@@ -1,4 +1,4 @@
-SpaceD UI for UGUI v1.4
+SpaceD UI for UGUI v1.6
 December 31 2014
 
 Artist: EvilSystem (evil.duloclan.com / evil-s.deviantart.com )
