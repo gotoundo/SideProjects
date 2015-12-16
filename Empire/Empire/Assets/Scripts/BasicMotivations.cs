@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class BasicMotivations : MonoBehaviour {
 
+
+    const float LoyaltyToBountyWeight = 2f;
     //the results of decision making
 
 	[System.Serializable]
@@ -93,13 +95,18 @@ public class BasicMotivations : MonoBehaviour {
     public BasicUnit.State CalculateState(BasicUnit unit)
     {
         Dictionary<BasicUnit.State, float> StateWeights = new Dictionary<BasicUnit.State, float>();
-        float totalWeight = 0;
+        
         foreach (Motive motive in Motives)
         {
             float weight = motive.GetWeight(unit);
             StateWeights.Add(motive.state, weight);
-            totalWeight += weight;
         }
+
+        AdditionalModifiers(StateWeights, unit); //here's where we apply some custom logic
+
+        float totalWeight = 0;
+        foreach (float weight in StateWeights.Values)
+            totalWeight += weight;
 
         float rolledWeight = Random.Range(0, totalWeight);
 
@@ -112,5 +119,15 @@ public class BasicMotivations : MonoBehaviour {
 
         throw new System.Exception("No state chosen!");
        // return BasicUnit.State.None;
+    }
+
+    void AdditionalModifiers(Dictionary<BasicUnit.State, float> StateWeights, BasicUnit unit)
+    {
+        if (StateWeights.ContainsKey(BasicUnit.State.KillBounty))
+            StateWeights[BasicUnit.State.KillBounty] += unit.Loyalty * LoyaltyToBountyWeight;
+        if (StateWeights.ContainsKey(BasicUnit.State.DefendBounty))
+            StateWeights[BasicUnit.State.DefendBounty] += unit.Loyalty * LoyaltyToBountyWeight;
+        if (StateWeights.ContainsKey(BasicUnit.State.ExploreBounty))
+            StateWeights[BasicUnit.State.ExploreBounty] += unit.Loyalty * LoyaltyToBountyWeight;
     }
 }

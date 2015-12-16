@@ -170,34 +170,52 @@ public class Team : MonoBehaviour {
         return Gold >= GameManager.defaultBountyIncrement;
     }
 
-    public void EnterPlaceExploreBountyMode(BasicBounty BountyTemplate)
-    {
-        GameManager.Main.StartBountyPlacement(BountyTemplate);
-    }
+   // public void EnterPlaceExploreBountyMode(BasicBounty BountyTemplate)
+  //  {
+    //    GameManager.Main.StartBountyPlacement(BountyTemplate);
+    //}
 
     public void PlaceExploreBounty(BasicBounty BountyTemplate, Vector3 position)
     {
         if (CanAffordBounty())
         {
-            GameObject NewBounty= (GameObject)Instantiate(BountyTemplate.gameObject, position, BountyTemplate.transform.rotation);
+            GameObject NewBounty = (GameObject)Instantiate(BountyTemplate.gameObject, position, BountyTemplate.transform.rotation);
             NewBounty.GetComponent<BasicBounty>().initializeExploreBounty(GameManager.defaultBountyIncrement, position);
+        }
+    }
+
+    public void PlaceKillBounty(BasicBounty BountyTemplate, BasicUnit target)
+    {
+        if (CanAffordBounty())
+        {
+            GameObject NewBounty = Instantiate(BountyTemplate.gameObject);
+            NewBounty.GetComponent<BasicBounty>().initializeKillBounty(GameManager.defaultBountyIncrement, target);
+        }
+    }
+
+    public void PlaceDefendBounty(BasicBounty BountyTemplate, BasicUnit target)
+    {
+        if (CanAffordBounty())
+        {
+            GameObject NewBounty = Instantiate(BountyTemplate.gameObject);
+            NewBounty.GetComponent<BasicBounty>().initializeDefendBounty(GameManager.defaultBountyIncrement, target);
         }
     }
 
 
 
-   /* public void ModifyMaxBuildableUnits(BasicUnit UnitTemplate, int amountDifference)
-    {
-        if (!MaxBuildableUnits.ContainsKey(UnitTemplate))
-            MaxBuildableUnits.Add(UnitTemplate, 0);
-        MaxBuildableUnits[UnitTemplate] += amountDifference;
-    }
+    /* public void ModifyMaxBuildableUnits(BasicUnit UnitTemplate, int amountDifference)
+     {
+         if (!MaxBuildableUnits.ContainsKey(UnitTemplate))
+             MaxBuildableUnits.Add(UnitTemplate, 0);
+         MaxBuildableUnits[UnitTemplate] += amountDifference;
+     }
 
-    public void ModifyCurrentUnits(BasicUnit Unit)
-    {
-        if (!CurrentUnits.Contains(Unit))
-            CurrentUnits.Add(Unit);
-    }*/
+     public void ModifyCurrentUnits(BasicUnit Unit)
+     {
+         if (!CurrentUnits.Contains(Unit))
+             CurrentUnits.Add(Unit);
+     }*/
 
 
 }

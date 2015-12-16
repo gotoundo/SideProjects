@@ -172,7 +172,7 @@ public class BasicAbility : MonoBehaviour {
 
     GameObject GetAttachmentPoint(GameObject objectBody, string attachmentName)
     {
-        if (Source == null)
+        if (objectBody == null)
             return gameObject;
 
         GameObject attachmentObject = AdamTools.FindInChildren(objectBody, attachmentName);
@@ -180,7 +180,7 @@ public class BasicAbility : MonoBehaviour {
         if (attachmentObject)
             return attachmentObject;
 
-        return Source.gameObject;
+        return objectBody;
     }
 
 	public void Start()
@@ -351,8 +351,8 @@ public class BasicAbility : MonoBehaviour {
     void CreateProjectile(BasicUnit targetUnit, string launchPoint)
     {
         Vector3 startPoint = transform.position + new Vector3(0, Source.GetHeight() / 2, 0); //default starting location is at center of source
-        GameObject attachPoint = GetAttachmentPoint(targetUnit.gameObject,launchPoint);
-        if (Source != null && attachPoint != Source.gameObject)
+        GameObject attachPoint = GetAttachmentPoint(Source.gameObject,launchPoint); //what happens if Source != null   :-0
+        if (attachPoint != Source.gameObject)
             startPoint = attachPoint.transform.position;
 
 

@@ -20,8 +20,10 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     public enum Stat { Strength, Dexterity, Intelligence, Special, Sensitivity }
     public enum Attribute { None, MaxHealth, KineticDamage, EnergyDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxEnergy, ManaRegen, Armor, PsychicDamage }
 
-    List<State> passiveStates = new List<State>(new State[] { State.Exploring, State.ExploreBounty, State.GoingShopping, State.GoingHome }); // these can be interrupted
-    List<State> disabledStates = new List<State>(new State[] { State.Stunned }); // these can be interrupted
+
+    List<State> combatStates = new List<State>(new State[] { State.Hunting,State.KillBounty }); //
+    List<State> passiveStates = new List<State>(new State[] { State.Exploring, State.ExploreBounty, State.GoingShopping, State.GoingHome }); // these can be interrupted by combat
+    List<State> disabledStates = new List<State>(new State[] { State.Stunned }); 
 
     //Attributes and Stats
     Dictionary<Attribute, float> baseAttributes;
@@ -210,9 +212,8 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     GameObject Home;
     public GameObject MoveTarget;
     BasicUnit MoveTargetUnit { get { return MoveTarget ? MoveTarget.GetComponent<BasicUnit>() : null; } }
-    BasicBounty BountyTarget { get { return MoveTarget ? MoveTarget.GetComponent<BasicBounty>() : null; } }
-    BasicBounty LastPickedBounty;
-    public Vector3 ExploreTarget;
+    BasicBounty BountyTarget;
+    Vector3 ExploreTarget;
     
     // bool spawnedByStructure = false;
 
@@ -374,8 +375,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     public class EffectsProfile
     {
         public ParticleSystem HitVFX; //blood
-
-            
+        public ParticleSystem DeathVFX;
     }
 
     //Other constants
@@ -497,7 +497,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
                     ExploreLogic();
                     break;
                 case State.Hunting:
-                    HuntingLogic();
+                    CombatLogic();
                     break;
                 case State.GoingShopping:
                     ShoppingLogic();
@@ -519,6 +519,12 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
                     break;
                 case State.ExploreBounty:
                     ExploreBountyLogic();
+                    break;
+                case State.KillBounty:
+                    KillBountyLogic();
+                    break;
+                case State.DefendBounty:
+                    DefendBountyLogic();
                     break;
                 case State.Stunned:
                     //nothing I guess?
@@ -596,7 +602,9 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         //Move Towards Target's new position
         if (agent != null && agent.isActiveAndEnabled && !HasTag(Tag.Inside))
         {
-            if (MoveTarget != null)
+            if (currentAbility != null && currentAbility.Running)
+                agent.SetDestination(transform.position);
+            else if (MoveTarget != null)
                 agent.SetDestination(MoveTarget.transform.position);
             else if (ExploreTarget == Vector3.zero)
                 agent.SetDestination(transform.position);
@@ -683,14 +691,28 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
                 case State.Stunned:
                     break;
                 case State.ExploreBounty:
-                    if (PickBounty()) // this hideous logic will need to be reworked once we have other bounty types
+                    if (FindBounty(BasicBounty.Type.Explore))
                         StartExploreBounty();
                     else
                         EndBounty();
                     break;
                 case State.KillBounty:
+                    if (FindBounty(BasicBounty.Type.Kill))
+                    {
+                        Debug.Log("Kill bounty found!");
+                        StartKillBounty();
+                    }
+                    else
+                    {
+                        Debug.Log("No bounty found...");
+                        EndBounty();
+                    }
                     break;
                 case State.DefendBounty:
+                    if (FindBounty(BasicBounty.Type.Defend))
+                        StartDefendBounty();
+                    else
+                        EndBounty();
                     break;
                 case State.Browsing:
                     break;
@@ -821,23 +843,37 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         return Potions.Count > 0;
     }
 
-    bool PickBounty()
+
+    //BOUNTIES
+    bool FindBounty(BasicBounty.Type bountyType)
     {
+        List<BasicBounty> acceptableBounties = new List<BasicBounty>();
+        foreach (BasicBounty bountyCandidate in GameManager.Main.AllBounties)
+            if (bountyCandidate.type == bountyType)
+                acceptableBounties.Add(bountyCandidate);
+
         bool success = false;
-        if (GameManager.Main.AllBounties.Count > 0)
+        if (acceptableBounties.Count > 0)
         {
-            LastPickedBounty = GameManager.Main.AllBounties[Random.Range(0, GameManager.Main.AllBounties.Count - 1)];
-            MoveTarget = LastPickedBounty.gameObject;
+            BountyTarget = acceptableBounties[Random.Range(0, acceptableBounties.Count - 1)];
+            MoveTarget = BountyTarget.gameObject;
             success = true;
         }
         return success;
     }
 
+    void EndBounty()
+    {
+        BountyTarget = null;
+        SetNewState(State.Deciding);
+    }
+
+    //EXPLORE BOUNTY
     void StartExploreBounty()
     {
         agent.stoppingDistance = 4f;
         SetNewState(State.ExploreBounty);
-        MoveTarget = LastPickedBounty.gameObject;
+        MoveTarget = BountyTarget.gameObject;
     }
 
     void ExploreBountyLogic()
@@ -855,9 +891,47 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         }
     }
 
-    void EndBounty()
+    
+
+    //Kill Bounty
+
+    void StartKillBounty()
     {
-        SetNewState(State.Deciding);
+        agent.stoppingDistance = 4f;
+        SetNewState(State.KillBounty);
+        MoveTarget = BountyTarget.targetUnit.gameObject;
+    }
+
+    void KillBountyLogic()
+    {
+        if (BountyTarget == null)
+        {
+            Debug.Log("BountyTarget is null, ending kill bounty mode");
+            EndBounty();
+            return;
+        }
+
+        Debug.Log("Entering KillBounty Combat Mode");
+        CombatLogic();
+    }
+
+
+    //Defend Bounty
+
+    void StartDefendBounty()
+    {
+        agent.stoppingDistance = 4f;
+        SetNewState(State.DefendBounty);
+        MoveTarget = BountyTarget.targetUnit.gameObject;
+    }
+
+    void DefendBountyLogic()
+    {
+        if (BountyTarget == null)
+        {
+            EndBounty();
+            return;
+        }
     }
 
 
@@ -1144,13 +1218,14 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
             MoveTarget = optionalTarget.gameObject;
     }
 
-    void HuntingLogic()
+    //Combat - not a standalone state, but this logic is used in states that require fighting
+    void CombatLogic()
     {
         if (Abilities.Count == 0)
         {
             if (debugMode)
-                Debug.Log("Stopping Hunting because I have no abilities");
-            StopHunting();
+                Debug.Log("Stopping combat because I have no abilities");
+            StopCombat();
             return;
         }
 
@@ -1159,11 +1234,9 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
             currentAbility = null;
             List<BasicUnit> acceptableTargets = ChooseAbilityAndFindPossibleTargets();
 
-            acceptableTargets = sortByDistance(acceptableTargets);
-
             if (acceptableTargets.Count != 0)
             {
-                MoveTarget = acceptableTargets[0].gameObject; //Random.Range(0, acceptableTargets.Count) //pick closest target
+                MoveTarget = sortByDistance(acceptableTargets)[0].gameObject; //pick closest target
             }
         }
 
@@ -1173,11 +1246,11 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         {
             if (debugMode)
                 Debug.Log("Stopping Hunting because Move Target is null");
-            StopHunting();
+            StopCombat();
         }
     }
 
-    void StopHunting()
+    void StopCombat()
     {
         InterruptAbility();
         SetNewState(State.Deciding);
@@ -1355,16 +1428,16 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
             if (!Tags.Contains(Tag.Structure))
                 StartHunting();
         }
-        else if (currentState == State.Hunting)
+        else if (combatStates.Contains(currentState))
         {
             if (Tags.Contains(Tag.Hero) && ShouldIFlee())
             {
-                StopHunting();
+                StopCombat();
                 StartFleeing();
             }
             else if (!WithinActivationRange() && (currentAbility == null || currentAbility.Finished || !currentAbility.Running))
             {
-                StopHunting();
+                StopCombat();
                 StartHunting();
             }
             else if (MoveTarget != null && (MoveTargetUnit.Tags.Contains(Tag.Structure) || Vector3.Distance(MoveTargetUnit.transform.position, transform.position) > maxHuntingDistance))
@@ -1414,19 +1487,16 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     void Die()
     {
         SetNewState(State.Dead);
+
         if (agent != null && agent.isActiveAndEnabled)
         {
             agent.speed = 0;
             agent.Stop();
             agent.enabled = false;
         }
-
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
-
         if (obstacle != null)
-        {
             obstacle.enabled = false;
-        }
 
         if (!Tags.Contains(Tag.Dead))
         { //then initialize the death state
@@ -1437,6 +1507,12 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
             if (Tags.Contains(Tag.Monster))
                 OnDeathDistributeGoldAndXP();
 
+
+            if (effectsProfile.DeathVFX != null)
+            {
+                GameObject deathEffect = (GameObject)Instantiate(effectsProfile.DeathVFX, transform.position, transform.rotation);
+                Destroy(deathEffect, effectsProfile.DeathVFX.duration);
+            }
 
             SetAnimationState("Dead", true);
 
@@ -1604,7 +1680,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     //Structure Leveling Up
     public bool AnotherStructureLevelExists()
     {
-        return Level < LevelUnlocks.Count() - 1;
+        return Level < LevelUnlocks.Count() - 1 && Level<AppManager.CurrentLevel.MaxCastleLevel;
     }
 
     public bool CanAffordToLevelUpStructure()

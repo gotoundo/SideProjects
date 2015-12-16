@@ -13,7 +13,6 @@ public class GameManager : MonoBehaviour {
     public Team Player;
     public List<Team> AllTeams;
     public List<BasicBounty> AllBounties;
-    public GameObject BountyTemplate;
     bool running = false;
     public bool PlacementMode { get { return PlacementModel.activeInHierarchy; } }
 
@@ -43,6 +42,7 @@ public class GameManager : MonoBehaviour {
     public GameObject OptionsButton;
 
     public Vector3 MapBounds;
+
 
 
     GameObject castle;
@@ -306,9 +306,24 @@ public class GameManager : MonoBehaviour {
 
     public void StartBountyPlacement(BasicBounty bounty)
     {
-        PlacementModel.SetActive(true);
-        PlacementModel.GetComponent<UIPlacementModel>().SetBountyTemplate(bounty);
-        StartPlacement(bounty.gameObject);
+        switch (bounty.type)
+        {
+            case BasicBounty.Type.Kill:
+                if (InspectedUnit)
+                    Player.PlaceKillBounty(bounty, InspectedUnit);
+                break;
+            case BasicBounty.Type.Explore:
+                PlacementModel.SetActive(true);
+                PlacementModel.GetComponent<UIPlacementModel>().SetBountyTemplate(bounty);
+                StartPlacement(bounty.gameObject);
+                break;
+            case BasicBounty.Type.Defend:
+                if (InspectedUnit)
+                    Player.PlaceDefendBounty(bounty, InspectedUnit);
+                break;
+            default:
+                break;
+        }
     }
 
     void StartPlacement(GameObject template)
@@ -320,7 +335,7 @@ public class GameManager : MonoBehaviour {
 
     public void EndPlacement()
     {
-        PlacementModel.SetActive(false);
+        PlacementModel.GetComponent<UIPlacementModel>().Finish();
         PlacementTemplate = null;
         UIInspectorPanel.Main.ExitDescriptionMode();
         //MenuAction();

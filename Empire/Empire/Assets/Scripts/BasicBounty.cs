@@ -8,11 +8,16 @@ public class BasicBounty : MonoBehaviour {
 
     public Type type;
     public int reward;
+    public UIBountyIcon iconTemplate;
+    UIBountyIcon myIcon;
+    public BasicUnit targetUnit;
 
-    public void initializeKillBounty(int reward, Transform killTarget)
+    public void initializeKillBounty(int reward, BasicUnit killTarget)
     {
         initializer(Type.Kill, reward);
-        transform.SetParent(killTarget);
+        transform.SetParent(killTarget.gameObject.transform);
+        transform.localPosition = Vector3.zero;
+        targetUnit = killTarget;
     }
 
     public void initializeExploreBounty(int reward, Vector3 exploreLocation)
@@ -21,10 +26,12 @@ public class BasicBounty : MonoBehaviour {
         transform.position = exploreLocation;
     }
 
-    public void initializeDefendBounty(int reward, Transform defendTarget)
+    public void initializeDefendBounty(int reward, BasicUnit defendTarget)
     {
         initializer(Type.Defend, reward);
-        transform.SetParent(defendTarget);
+        transform.SetParent(defendTarget.gameObject.transform);
+        transform.localPosition = Vector3.zero;
+        targetUnit = defendTarget;
     }
 
     void initializer(Type type, int reward)
@@ -32,6 +39,9 @@ public class BasicBounty : MonoBehaviour {
         this.type = type;
         IncreaseBounty(reward);
         GameManager.Main.AllBounties.Add(this);
+        myIcon = Instantiate(iconTemplate.gameObject).GetComponent<UIBountyIcon>();
+        myIcon.Follow(gameObject);
+
     }
 
     public void IncreaseBounty(int goldAmount)
@@ -46,10 +56,18 @@ public class BasicBounty : MonoBehaviour {
         Remove();
     }
 
+    public void Cancel()
+    {
+        if (myIcon)
+            Destroy(myIcon);
+    }
+
     public void Remove()
     {
         GameManager.Main.AllBounties.Remove(this);
         Destroy(gameObject);
+        if (myIcon)
+            Destroy(myIcon);
     }
 
 	// Use this for initialization

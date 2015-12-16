@@ -22,6 +22,6 @@ public class UIBuyBounty : MonoBehaviour {
     }
     public void BuyBounty()
     {
-        GameManager.Main.Player.EnterPlaceExploreBountyMode(BountyTemplate);
+        GameManager.Main.StartBountyPlacement(BountyTemplate);
     }
 }

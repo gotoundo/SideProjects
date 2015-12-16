@@ -55,12 +55,6 @@
     <Reference Include="UnityEngine.Networking">
       <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.Networking">
-      <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>Library\UnityAssemblies\UnityEngine.UI.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEditor">
       <HintPath>Library\UnityAssemblies\UnityEditor.dll</HintPath>
     </Reference>
@@ -210,6 +204,7 @@
     <Compile Include="Assets\TilesOfWar\Scripts\GameObjectBag.cs" />
     <Compile Include="Assets\TilesOfWar\Scripts\VisibilityType.cs" />
     <Compile Include="Assets\TilesOfWar\Shaders\FoWPro.cs" />
+    <Compile Include="Assets\UIBountyIcon.cs" />
     <Compile Include="Assets\UIOptionsOpenButton.cs" />
     <Compile Include="Assets\UIQuitGameButton.cs" />
     <Compile Include="Assets\UIVictoryButton.cs" />

@@ -10,6 +10,17 @@ public class UIPlacementModel : MonoBehaviour {
     BasicBounty bountyTemplate;
     public List<Collider> collisions;
     GameObject TempModel;
+
+    UIBountyIcon bountyIcon;
+
+
+    public void Finish()
+    {
+        if (bountyIcon)
+            Destroy(bountyIcon.gameObject);
+
+        gameObject.SetActive(false);
+    }
     
     public bool Blocked
     {
@@ -35,6 +46,8 @@ public class UIPlacementModel : MonoBehaviour {
         currentMode = PlacementMode.ExploreBounty;
         this.bountyTemplate = bountyTemplate;
         assumeDimentions(bountyTemplate.gameObject);
+        bountyIcon = Instantiate(bountyTemplate.iconTemplate.gameObject).GetComponent<UIBountyIcon>();
+        bountyIcon.Follow(gameObject);
     }
 
     void assumeDimentions(GameObject template)
