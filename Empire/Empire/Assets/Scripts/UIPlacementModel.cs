@@ -21,6 +21,12 @@ public class UIPlacementModel : MonoBehaviour {
         currentMode = PlacementMode.Structure;
         this.unitTemplate = unitTemplate;
         assumeDimentions(unitTemplate.StructureVisual);
+
+        BoxCollider myCollider = GetComponent<BoxCollider>();
+        BoxCollider newCollider = unitTemplate.gameObject.GetComponent<BoxCollider>();
+        myCollider.center = newCollider.center;
+        myCollider.size = newCollider.size + new Vector3(3,3,3);
+
         assignColor();
     }
 
@@ -42,6 +48,8 @@ public class UIPlacementModel : MonoBehaviour {
         TempModel = (GameObject)Instantiate(template, transform.position, template.transform.rotation);
         TempModel.transform.SetParent(transform);
 
+        //BoxCollider bCollider = TempModel.GetComponentInChildren<BoxCollider>();
+       // bCollider.size = bCollider.size + new Vector3(5, 5, 5);
         //transform.localScale = template.transform.localScale;
         //transform.rotation = template.transform.rotation;
         //GetComponent<MeshFilter>().mesh = template.GetComponent<MeshFilter>().sharedMesh;
