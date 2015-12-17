@@ -15,7 +15,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     public DataNameBank nameBank;
    
     //Enumerations
-    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed, Enemy, Ally, Neutral, Inside }
+    public enum Tag { Structure, Organic, Imperial, Monster, Mechanical, Dead, Store, Self, Hero, Consumed, Enemy, Ally, Neutral, Inside, Hidden }
     public enum State { None, Deciding, Exploring, Hunting, InCombat, Following, GoingShopping, GoingHome, Fleeing, Relaxing, Sleeping, Dead, Structure, Stunned, ExploreBounty, KillBounty, DefendBounty, Browsing } //the probabilities of which state results after "Deciding" is determined per class
     public enum Stat { Strength, Dexterity, Intelligence, Special, Sensitivity }
     public enum Attribute { None, MaxHealth, KineticDamage, EnergyDamage, MoveSpeed, AttackSpeed, HealthRegen, MaxEnergy, ManaRegen, Armor, PsychicDamage }
@@ -201,6 +201,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     //Components
     Animator animator;
     NavMeshAgent agent;
+    NavMeshObstacle obstacle;
     LineRenderer lineRenderer;
     new Renderer renderer;
     Rigidbody rigidBody;
@@ -238,12 +239,14 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         public BasicUnit SpawnType;
         public int MaxSpawns = 0;
         public float SpawnCooldown = 3;
+        public float InitialCooldown = 0;
         private float RemainingSpawnCooldown;
         public List<BasicUnit> Spawns;
 
         public void Initialize(BasicUnit spawningUnit)
         {
             this.spawningUnit = spawningUnit;
+            RemainingSpawnCooldown = InitialCooldown;
             hiring = false;
         }
 
@@ -319,7 +322,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     public List<UnitSpawner> Spawners;
 
     public float hireTime;
-    public bool hiring;
+    bool hiring;
     public int maxHirelings;
 
     public List<BasicUnit> GetHiredHeroes()
@@ -399,6 +402,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
+        obstacle = GetComponent<NavMeshObstacle>();
         animator = GetComponent<Animator>();
         rigidBody = GetComponent<Rigidbody>();
         lineRenderer = GetComponent<LineRenderer>();
@@ -472,8 +476,11 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
             agent.stoppingDistance = defaultStoppingDistance;
         }
 
-        GameObject healthBar = Instantiate(GameManager.Main.HealthBarTemplate);
-        healthBar.GetComponent<UIHealthBar>().Initialize(this);
+        if (!HasTag(Tag.Hidden))
+        {
+            GameObject healthBar = Instantiate(GameManager.Main.HealthBarTemplate);
+            healthBar.GetComponent<UIHealthBar>().Initialize(this);
+        }
 
         if (name == null || name.Length == 0)
             name = templateID;
@@ -1494,7 +1501,6 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
             agent.Stop();
             agent.enabled = false;
         }
-        NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle != null)
             obstacle.enabled = false;
 
@@ -1851,6 +1857,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
 
     public bool HasTag(Tag tag, BasicUnit questioner = null)
     {
+
         if (questioner != null)
         {
             if (tag == Tag.Self)
@@ -1888,16 +1895,20 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     {
         if (agent)
             return agent.radius;
+        else if (obstacle)
+            return obstacle.radius;
         else
-            return GetComponent<NavMeshObstacle>().radius;
+            return 0;
     }
 
     public float GetHeight()
     {
         if (agent)
             return agent.height;
+        else if (obstacle)
+            return obstacle.height;
         else
-            return GetComponent<NavMeshObstacle>().height;
+            return 0;
     }
 
 }

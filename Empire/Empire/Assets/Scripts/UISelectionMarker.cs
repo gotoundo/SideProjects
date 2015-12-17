@@ -17,6 +17,7 @@ public class UISelectionMarker : MonoBehaviour {
         {
             transform.localScale = new Vector3(1, 1, 1);
             transform.position = Camera.main.WorldToScreenPoint(selectedUnit.transform.position + new Vector3(0, 0, 2));
+            transform.position = new Vector3(transform.position.x, transform.position.y, 1f);
         }
     }
 }

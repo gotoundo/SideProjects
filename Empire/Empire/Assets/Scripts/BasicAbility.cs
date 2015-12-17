@@ -469,6 +469,9 @@ public class BasicAbility : MonoBehaviour {
         if (potentialTarget == null)
             return false;
 
+        if (potentialTarget.HasTag(BasicUnit.Tag.Hidden))
+            return false;
+
         if (potentialTarget.HasTag(BasicUnit.Tag.Inside) && !validTargetTags.Contains(BasicUnit.Tag.Inside))
             return false;
 
