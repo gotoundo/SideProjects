@@ -11,7 +11,7 @@ public class UIPlacementModel : MonoBehaviour {
     public List<Collider> collisions;
     GameObject TempModel;
 
-    UIBountyIcon bountyIcon;
+    static UIBountyIcon bountyIcon;
 
 
     public void Finish()
@@ -43,6 +43,9 @@ public class UIPlacementModel : MonoBehaviour {
 
     public void SetBountyTemplate(BasicBounty bountyTemplate)
     {
+        if (bountyIcon)
+            Destroy(bountyIcon.gameObject);
+
         currentMode = PlacementMode.ExploreBounty;
         this.bountyTemplate = bountyTemplate;
         assumeDimentions(bountyTemplate.gameObject);
@@ -83,23 +86,18 @@ public class UIPlacementModel : MonoBehaviour {
 
     void assignColor()
     {
-        //if (unitTemplate != null)
-        //{
-            MeshRenderer[] Renderers = TempModel.GetComponentsInChildren<MeshRenderer>();
-            if (Blocked)
-            {
-                foreach (MeshRenderer renderer in Renderers)
-                    renderer.material.color = Color.red;
-                //TempModel.GetComponent<MeshRenderer>().material.color = Color.red;
-            }
-            else
-            {
-                foreach (MeshRenderer renderer in Renderers)
-                    renderer.material.color = Color.green;
-            }
-                //TempModel.GetComponent<MeshRenderer>().material = unitTemplate.StructureVisual.GetComponent<MeshRenderer>().sharedMaterial;
-       // }
+        MeshRenderer[] Renderers = TempModel.GetComponentsInChildren<MeshRenderer>();
 
+        if (Blocked)
+        {
+            foreach (MeshRenderer renderer in Renderers)
+                renderer.material.color = Color.red;
+        }
+        else
+        {
+            foreach (MeshRenderer renderer in Renderers)
+                renderer.material.color = Color.green;
+        }
     }
 
     void OnTriggerEnter(Collider other)

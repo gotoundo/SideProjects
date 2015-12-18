@@ -41,7 +41,6 @@ public class BasicBounty : MonoBehaviour {
         GameManager.Main.AllBounties.Add(this);
         myIcon = Instantiate(iconTemplate.gameObject).GetComponent<UIBountyIcon>();
         myIcon.Follow(gameObject);
-
     }
 
     public void IncreaseBounty(int goldAmount)
@@ -56,28 +55,15 @@ public class BasicBounty : MonoBehaviour {
         Remove();
     }
 
-    public void Cancel()
-    {
-        if (myIcon)
-            Destroy(myIcon);
-    }
-
     public void Remove()
     {
-        GameManager.Main.AllBounties.Remove(this);
         Destroy(gameObject);
-        if (myIcon)
-            Destroy(myIcon);
     }
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-
-	
-	}
+    void OnDestroy()
+    {
+        GameManager.Main.AllBounties.Remove(this);
+        if (myIcon)
+            Destroy(myIcon.gameObject);
+    }
 }

@@ -83,7 +83,18 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
                         baseStat += item.StatEffects[j].value + item.EnchantmentLevel;
             }
         }
-        return Mathf.RoundToInt(baseStat);
+
+        foreach (BasicBuff buff in attachedBuffs)
+        {
+            if (buff != null)
+            {
+                for (int j = 0; j < buff.StatEffects.Count(); j++)
+                    if (buff.StatEffects[j].stat == stat)
+                        baseStat += buff.StatEffects[j].value;
+            }
+        }
+
+        return Mathf.Max(0,Mathf.RoundToInt(baseStat));
     }
 
     public float GetAttribute(Attribute attribute) //attribute modifiers are added or subtracted
@@ -99,7 +110,18 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
                         baseAttribute += item.AttributeEffects[j].value + item.EnchantmentLevel;
             }
         }
-        return baseAttribute;
+
+        foreach (BasicBuff buff in attachedBuffs)
+        {
+            if (buff != null)
+            {
+                for (int j = 0; j < buff.AttributeEffects.Count(); j++)
+                    if (buff.AttributeEffects[j].attribute == attribute)
+                        baseAttribute += buff.AttributeEffects[j].value;
+            }
+        }
+
+        return Mathf.Max(0,baseAttribute);
     }
     
     //Derived Statistics
@@ -131,6 +153,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     public float currentHealth;
     public List<BasicAbility> Abilities;
     BasicAbility currentAbility;
+    public List<BasicBuff> attachedBuffs;
 
     [System.Serializable]
     public class EquipmentSlot
@@ -411,6 +434,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         ProductsSold = ProductsSold ?? new List<BasicItem>();
         Tags = Tags ?? new List<Tag>();
         Abilities = Abilities ?? new List<BasicAbility>();
+        attachedBuffs = new List<BasicBuff>();
         ItemEnchantmentsSold = ItemEnchantmentsSold ?? new List<BasicItem.Enchantment>();
         UniqueItems = UniqueItems ?? new List<BasicItem>();
         Occupants = Occupants ?? new List<BasicUnit>();
@@ -609,6 +633,8 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         //Move Towards Target's new position
         if (agent != null && agent.isActiveAndEnabled && !HasTag(Tag.Inside))
         {
+            agent.speed = GetAttribute(Attribute.MoveSpeed);
+
             if (currentAbility != null && currentAbility.Running)
                 agent.SetDestination(transform.position);
             else if (MoveTarget != null)
@@ -779,12 +805,12 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     void GoingHomeLogic()
     {
         MoveTarget = Home;
-        GameObject sleepingLocation = MoveTarget;
+        //GameObject sleepingLocation = MoveTarget;
         if (MoveTarget == null)
             StopGoingHome();
         else if (WithinActivationRange())
         {
-            StartSleeping(sleepingLocation);
+            StartSleeping(MoveTarget);
         }
     }
     void StopGoingHome()
@@ -913,12 +939,12 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
     {
         if (BountyTarget == null)
         {
-            Debug.Log("BountyTarget is null, ending kill bounty mode");
+            //Debug.Log("BountyTarget is null, ending kill bounty mode");
             EndBounty();
             return;
         }
 
-        Debug.Log("Entering KillBounty Combat Mode");
+        //Debug.Log("Entering KillBounty Combat Mode");
         CombatLogic();
     }
 
@@ -1325,7 +1351,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
                 return;
         }
 
-        if (!currentAbility.IsValidTarget(initialAbilityTarget, false))
+        if (!currentAbility.IsValidTarget(initialAbilityTarget, false) || !currentAbility.CanCast())
         {
             if (debugMode)
                 Debug.Log("Initial target no longer valid! Cancelling ability use.");
@@ -1479,6 +1505,11 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
 
     protected bool IsWithinRange(GameObject potentialTarget, float range)
     {
+        BasicUnit unit = potentialTarget.GetComponent<BasicUnit>();
+        if(unit)
+        {
+            return (Vector3.Distance(transform.position, unit.transform.position) < range + GetRadius() + unit.GetRadius());
+        }
 
         RaycastHit[] hitInfo = Physics.RaycastAll(transform.position, potentialTarget.transform.position - transform.position, range + GetRadius());
         for (int i = 0; i < hitInfo.Length; i++)
@@ -1497,7 +1528,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
 
         if (agent != null && agent.isActiveAndEnabled)
         {
-            agent.speed = 0;
+            //agent.speed = 0;
             agent.Stop();
             agent.enabled = false;
         }
@@ -1516,7 +1547,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
 
             if (effectsProfile.DeathVFX != null)
             {
-                GameObject deathEffect = (GameObject)Instantiate(effectsProfile.DeathVFX, transform.position, transform.rotation);
+                GameObject deathEffect = (GameObject)Instantiate(effectsProfile.DeathVFX.gameObject, transform.position, transform.rotation);
                 Destroy(deathEffect, effectsProfile.DeathVFX.duration);
             }
 
@@ -1605,7 +1636,7 @@ public class BasicUnit : MonoBehaviour, IPointerClickHandler, IDragHandler, IScr
         // Debug.Log(gameObject.name + " earned " + xpAmount + " XP");
 
         XP += xpAmount;
-        int proposedNewLevel = (int)Mathf.Sqrt(XP);
+        int proposedNewLevel = (int)(XP/2);//Mathf.Sqrt(XP);
         while (Level < proposedNewLevel)
             LevelUp();
     }

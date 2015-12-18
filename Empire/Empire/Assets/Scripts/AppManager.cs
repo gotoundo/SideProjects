@@ -15,6 +15,7 @@ public class AppManager : MonoBehaviour {
 
     public static void LoadLevel(LevelData level)
     {
+        FoWManager.ClearSingleton();
         CurrentLevel = level;
         LoadScene(level.SceneID);
     }

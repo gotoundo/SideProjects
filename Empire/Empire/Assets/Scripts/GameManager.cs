@@ -316,6 +316,7 @@ public class GameManager : MonoBehaviour {
                 PlacementModel.SetActive(true);
                 PlacementModel.GetComponent<UIPlacementModel>().SetBountyTemplate(bounty);
                 StartPlacement(bounty.gameObject);
+                UIInspectorPanel.Main.EnterDescriptionMode();
                 break;
             case BasicBounty.Type.Defend:
                 if (InspectedUnit)
@@ -328,6 +329,7 @@ public class GameManager : MonoBehaviour {
 
     void StartPlacement(GameObject template)
     {
+
         PlacementModel.transform.position = camera.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, camera.nearClipPlane));
         PlacementModel.transform.position = new Vector3(PlacementModel.transform.position.x, 1f, PlacementModel.transform.position.z);
         PlacementTemplate = template;
@@ -355,6 +357,9 @@ public class GameManager : MonoBehaviour {
 
     public void StartInspection(BasicUnit unitToInspect)
     {
+       // if(UIInspectorPanel.Main)
+        //    UIInspectorPanel.Main.ExitDescriptionMode();
+
         InspectorPanel.SetActive(true);
         InspectedUnit = unitToInspect;
         InspectorPanel.GetComponent<UIInspectorPanel>().InspectNewObject();
@@ -408,11 +413,13 @@ public class GameManager : MonoBehaviour {
 
         ShowHUD(false);
         OptionsPanel.SetActive(true);
+        running = false;
     }
 
     public void CloseOptionsPanel()
     {
         ShowHUD(true);
         OptionsPanel.SetActive(false);
+        running = true;
     }
 }

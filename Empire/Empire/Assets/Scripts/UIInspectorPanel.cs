@@ -170,7 +170,8 @@ public class UIInspectorPanel : MonoBehaviour {
     public void InspectNewObject()
     {
         descriptionMode = false;
-        
+        DescriptionButtonText.text = "?";
+
         BasicUnit inspectedUnit = GameManager.Main.InspectedUnit;
 
         foreach (List<Button> buttonCollection in ButtonCollections)

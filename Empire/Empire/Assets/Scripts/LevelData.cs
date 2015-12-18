@@ -12,6 +12,9 @@ public class LevelData : MonoBehaviour {
     public int MaxCastleLevel = 3;
     public List<BasicUnit> BannedStructures;
 
+    [TextArea(3, 10)]
+    public string ObjectiveText;
+
     public List<LockID> LocksRequired;
     public List<LockID> LocksGranted;
     //public DialogInfo GameWinDialog;

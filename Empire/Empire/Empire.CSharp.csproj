@@ -207,6 +207,7 @@
     <Compile Include="Assets\UIBountyIcon.cs" />
     <Compile Include="Assets\UIOptionsOpenButton.cs" />
     <Compile Include="Assets\UIQuitGameButton.cs" />
+    <Compile Include="Assets\UIRestartGameButton.cs" />
     <Compile Include="Assets\UIVictoryButton.cs" />
   </ItemGroup>
   <ItemGroup>

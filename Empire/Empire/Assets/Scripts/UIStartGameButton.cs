@@ -34,7 +34,7 @@ public class UIStartGameButton : MonoBehaviour {
 
     public void Click()
     {
-        FoWManager.ClearSingleton();
+        
         AppManager.LoadLevel(levelData);
     }
 }

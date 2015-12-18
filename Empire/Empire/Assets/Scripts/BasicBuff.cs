@@ -10,7 +10,7 @@ public static class Tools
 }
 
 public class BasicBuff : MonoBehaviour { //attached to 
-	public enum Effect {None, Damage, Healing, Stun, Convert, KineticDamage,EnergyDamage,PsychicDamage}
+	public enum Effect {None, Damage, Healing, Stun, Convert, KineticDamage,EnergyDamage,PsychicDamage,Slow}
 
 	//Specified in the Inspector
 	public Effect effect = Effect.Damage;
@@ -19,6 +19,14 @@ public class BasicBuff : MonoBehaviour { //attached to
 	public float statRatio = 1; //for example, if 1.5, use Int * 1.5 for immediate damage
 	public float statPerSecRatio = 0;
 	public float duration = 0; //0 for immediate effects
+    
+ 
+
+    public BasicItem.AttributeEffect[] AttributeEffects;
+    public BasicItem.StatEffect[] StatEffects;
+
+    public bool Stackable = true;
+
     public List<BasicUnit.Tag> TemporaryTags;
     public List<BasicUnit.Tag> TemporaryTagsRemoved;
     //public bool TeamChange;
@@ -41,6 +49,18 @@ public class BasicBuff : MonoBehaviour { //attached to
 		this.Source = Source;
 		this.Target = Target;
 		totalEffectPower = Source.GetStat (statUsed)+Source.GetAttribute(attributeUsed);
+
+        if(!Stackable)
+        {
+            List<BasicBuff> conflictingBuffs = new List<BasicBuff>();
+            foreach (BasicBuff otherBuff in Target.attachedBuffs)
+                if (otherBuff.effect == effect && !otherBuff.Stackable)
+                    conflictingBuffs.Add(otherBuff);
+
+            foreach (BasicBuff conflict in conflictingBuffs)
+                conflict.EndBuff();
+        }
+        Target.attachedBuffs.Add(this);
 	}
 	
 	// Update is called once per frame
@@ -120,6 +140,8 @@ public class BasicBuff : MonoBehaviour { //attached to
             if (TemporaryTagsRemoved != null)
                 foreach (BasicUnit.Tag tag in TemporaryTagsRemoved)
                     Target.AddTag(tag);
+
+            Target.attachedBuffs.Remove(this);
           
             switch (effect)
             {

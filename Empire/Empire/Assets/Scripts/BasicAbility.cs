@@ -421,7 +421,7 @@ public class BasicAbility : MonoBehaviour {
         {
             LineRenderer lineRenderer = Source.gameObject.GetComponent<LineRenderer>();
             lineRenderer.enabled = true;
-            lineRenderer.SetPosition(0, Source.gameObject.transform.position);
+            lineRenderer.SetPosition(0, GetAttachmentPoint(Source.gameObject,Launches[0].attachmentPoint).transform.position);
             lineRenderer.SetPosition(1, initialTarget.transform.position);
         }
 
